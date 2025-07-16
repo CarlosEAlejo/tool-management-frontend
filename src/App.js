@@ -1,25 +1,62 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from 'react';
+import Header from './components/Header';
+import ToolTable from './components/ToolTable';
+import AddToolModal from './components/AddToolModal';
+import ToolDetailModal from './components/ToolDetailModal';
+import ReportModal from './components/ReportModal';
+import Stats from './components/Stats';
+import Filters from './components/Filters';
+import { useTools } from './hooks/useTools';
 
-function App() {
+const App = () => {
+  const {
+    tools,
+    addTool,
+    editTool,
+    deleteTool,
+    generateReport,
+    updateStats,
+    stats,
+    modalType,
+    openModal,
+    closeModal,
+    currentTool,
+    setCurrentTool,
+    responsibles,
+  } = useTools();
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [responsibleFilter, setResponsibleFilter] = useState('all');
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="container mx-auto px-4 py-8 bg-gray-50">
+      <Header openModal={openModal} generateReport={generateReport} />
+      <Stats stats={stats} />
+      <Filters
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        responsibleFilter={responsibleFilter}
+        setResponsibleFilter={setResponsibleFilter}
+        responsibles={responsibles}
+      />
+      <ToolTable
+        tools={tools}
+        editTool={editTool}
+        deleteTool={deleteTool}
+        setCurrentTool={setCurrentTool}
+        openModal={openModal}
+        searchTerm={searchTerm}
+        statusFilter={statusFilter}
+        responsibleFilter={responsibleFilter}
+      />
+      <AddToolModal addTool={addTool} editTool={editTool} closeModal={closeModal} modalType={modalType} tool={currentTool} />
+      <ToolDetailModal tool={currentTool} editTool={editTool} closeModal={closeModal} modalType={modalType} />
+      <ReportModal tools={tools} stats={stats} closeModal={closeModal} modalType={modalType} />
     </div>
   );
-}
+};
 
 export default App;

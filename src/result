@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Herramientas de Construcción</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        .tool-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .status-active {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-maintenance {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-lost {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .animate-bounce {
+            animation: bounce 1s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(-5px);
+            }
+            50% {
+                transform: translateY(5px);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="mb-8">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800">🏗️ Gestión de Herramientas</h1>
+                    <p class="text-gray-600">Control de inventario para empresa de construcción</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="openModal('add-tool')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                        Nueva Herramienta
+                    </button>
+                    <button onclick="generateReport()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-2 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                        Generar Reporte
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-gray-500 text-sm font-medium">Total Herramientas</h3>
+                <p class="text-2xl font-bold text-gray-800 mt-1" id="total-tools">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-gray-500 text-sm font-medium">En Mantenimiento</h3>
+                <p class="text-2xl font-bold text-yellow-800 mt-1" id="maintenance-tools">0</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-gray-500 text-sm font-medium">Próximo Mantenimiento</h3>
+                <p class="text-2xl font-bold text-blue-800 mt-1" id="next-maintenance">-</p>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white rounded-lg shadow p-4 mb-6">
+            <div class="flex flex-col md:flex-row gap-4">
+                <div class="w-full md:w-1/3">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Buscar Herramienta</label>
+                    <input type="text" id="search-tool" placeholder="Nombre o código..." class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="w-full md:w-1/3">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                    <select id="filter-status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">Todos</option>
+                        <option value="active">Disponible</option>
+                        <option value="assigned">Asignada</option>
+                        <option value="maintenance">Mantenimiento</option>
+                        <option value="lost">Perdida/Dañada</option>
+                    </select>
+                </div>
+                <div class="w-full md:w-1/3">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Responsable</label>
+                    <select id="filter-responsible" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">Todos</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tools Table -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Responsable</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Asignación</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Próximo Mant.</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="tools-table-body">
+                        <!-- Tools will be inserted here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden flex-col items-center justify-center py-12">
+            <img src="https://placehold.co/300x200" alt="Caja de herramientas vacía sobre fondo blanco" class="w-48 h-48 object-cover mb-4">
+            <h3 class="text-lg font-medium text-gray-900 mb-1">No hay herramientas registradas</h3>
+            <p class="text-gray-500 mb-4">Comienza agregando nuevas herramientas al inventario</p>
+            <button onclick="openModal('add-tool')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                </svg>
+                Agregar primera herramienta
+            </button>
+        </div>
+    </div>
+
+    <!-- Add Tool Modal -->
+    <div id="add-tool-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-800">Agregar Nueva Herramienta</h2>
+            </div>
+            <div class="p-6">
+                <form id="add-tool-form">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Código de Herramienta</label>
+                            <input type="text" name="code" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                            <input type="text" name="name" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                            <select name="type" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="electric">Eléctrica</option>
+                                <option value="manual">Manual</option>
+                                <option value="measuring">Medición</option>
+                                <option value="safety">Seguridad</option>
+                                <option value="other">Otro</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                            <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="active">Disponible</option>
+                                <option value="assigned">Asignada</option>
+                                <option value="maintenance">Mantenimiento</option>
+                                <option value="lost">Perdida/Dañada</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Responsable</label>
+                            <input type="text" name="responsible" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de Asignación</label>
+                            <input type="date" name="assignmentDate" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Fecha Próximo Mantenimiento</label>
+                            <input type="date" name="nextMaintenance" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Ubicación/Almacén</label>
+                            <input type="text" name="location" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Notas/Comentarios</label>
+                        <textarea name="notes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+                <button onclick="closeModal('add-tool')" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">Cancelar</button>
+                <button onclick="addTool()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors">Guardar Herramienta</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tool Detail Modal -->
+    <div id="tool-detail-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h2 class="text-xl font-semibold text-gray-800">Detalle de Herramienta</h2>
+                <button onclick="closeModal('tool-detail')" class="text-gray-400 hover:text-gray-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500">Código</h3>
+                        <p class="mt-1 text-lg font-medium text-gray-900" id="detail-code"></p>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500">Nombre</h3>
+                        <p class="mt-1 text-lg font-medium text-gray-900" id="detail-name"></p>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500">Tipo</h3>
+                        <p class="mt-1 text-lg font-medium text-gray-900" id="detail-type"></p>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500">Estado</h3>
+                        <p class="mt-1 text-lg font-medium" id="detail-status"></p>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500">Responsable</h3>
+                        <p class="mt-1 text-lg font-medium text-gray-900" id="detail-responsible"></p>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500">Fecha Asignación</h3>
+                        <p class="mt-1 text-lg font-medium text-gray-900" id="detail-assignment-date"></p>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500">Próximo Mantenimiento</h3>
+                        <p class="mt-1 text-lg font-medium text-gray-900" id="detail-next-maintenance"></p>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500">Ubicación/Almacén</h3>
+                        <p class="mt-1 text-lg font-medium text-gray-900" id="detail-location"></p>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500">Notas/Comentarios</h3>
+                    <p class="mt-1 text-gray-900" id="detail-notes"></p>
+                </div>
+                <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500 mb-2">Historial de Mantenimiento</h3>
+                        <ul class="space-y-2" id="maintenance-history">
+                            <!-- Maintenance history will be inserted here -->
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500 mb-2">Agregar Mantenimiento</h3>
+                        <div class="flex">
+                            <input type="date" id="new-maintenance-date" class="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <button onclick="addMaintenance()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-r-md transition-colors">Agregar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+                <button onclick="closeModal('tool-detail')" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">Cerrar</button>
+                <button id="edit-tool-btn" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors">Editar</button>
+                <button id="delete-tool-btn" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Modal -->
+    <div id="report-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h2 class="text-xl font-semibold text-gray-800">Reporte de Inventario</h2>
+                <button onclick="closeModal('report')" class="text-gray-400 hover:text-gray-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="p-6">
+                <div class="flex justify-between mb-6">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900">Empresa Constructora XYZ</h3>
+                        <p class="text-gray-600">Fecha del reporte: <span id="report-date"></span></p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-gray-600">Total herramientas: <span id="report-total"></span></p>
+                        <p class="text-gray-600">Herramientas perdidas/deterioradas: <span id="report-lost"></span></p>
+                    </div>
+                </div>
+                
+                <div class="mb-8">
+                    <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Resumen por Estado</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="bg-white p-4 rounded-lg shadow border-l-4 border-green-500">
+                            <p class="text-sm text-gray-500">Disponibles</p>
+                            <p class="text-xl font-bold text-gray-800" id="report-available"></p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
+                            <p class="text-sm text-gray-500">Asignadas</p>
+                            <p class="text-xl font-bold text-gray-800" id="report-assigned"></p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow border-l-4 border-yellow-500">
+                            <p class="text-sm text-gray-500">Mantenimiento</p>
+                            <p class="text-xl font-bold text-gray-800" id="report-maintenance"></p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow border-l-4 border-red-500">
+                            <p class="text-sm text-gray-500">Perdidas/Dañadas</p>
+                            <p class="text-xl font-bold text-gray-800" id="report-lost-damaged"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-8">
+                    <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Próximos Mantenimientos</h4>
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Herramienta</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Responsable</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Mantenimiento</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="report-maintenance-body">
+                            <!-- Maintenance items will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Herramientas por Tipo</h4>
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <canvas id="tool-type-chart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-200 flex justify-between">
+                <button class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors" onclick="printReport()">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z" clip-rule="evenodd" />
+                    </svg>
+                    Imprimir Reporte
+                </button>
+                <div class="space-x-3">
+                    <button onclick="closeModal('report')" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">Cerrar</button>
+                    <button onclick="exportToExcel()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                        Exportar a Excel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data - in a real app, this would come from a database
+        let tools = [
+            {
+                id: 1,
+                code: 'T-001',
+                name: 'Martillo Demoledor',
+                type: 'electric',
+                status: 'assigned',
+                responsible: 'Juan Pérez',
+                assignmentDate: '2023-05-15',
+                nextMaintenance: '2023-11-15',
+                location: 'Almacén Central',
+                notes: 'Revisar anclajes mensualmente',
+                maintenanceHistory: ['2023-05-10', '2023-02-15']
+            },
+            {
+                id: 2,
+                code: 'T-002',
+                name: 'Llave Stillson 24"',
+                type: 'manual',
+                status: 'active',
+                responsible: '',
+                assignmentDate: '',
+                nextMaintenance: '2023-09-20',
+                location: 'Almacén Sur',
+                notes: 'Última revisión OK',
+                maintenanceHistory: ['2023-03-20']
+            },
+            {
+                id: 3,
+                code: 'T-003',
+                name: 'Nivel Láser',
+                type: 'measuring',
+                status: 'maintenance',
+                responsible: 'Carlos García',
+                assignmentDate: '2023-06-02',
+                nextMaintenance: '2023-07-15',
+                location: 'Taller Mantenimiento',
+                notes: 'Batería agotada, enviar a servicio técnico',
+                maintenanceHistory: ['2023-04-15', '2023-01-10']
+            }
+        ];
+
+        let responsibles = ['Juan Pérez', 'Carlos García', 'Ana López', 'Miguel Torres', 'Almacén Central', 'Almacén Sur'];
+
+        // Current tool being viewed/edited
+        let currentToolId = null;
+
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            renderToolsTable();
+            updateStats();
+            populateResponsibleFilter();
+            
+            // Add event listeners for filters
+            document.getElementById('search-tool').addEventListener('input', renderToolsTable);
+            document.getElementById('filter-status').addEventListener('change', renderToolsTable);
+            document.getElementById('filter-responsible').addEventListener('change', renderToolsTable);
+        });
+
+        // Render the tools table based on filters
+        function renderToolsTable() {
+            const tableBody = document.getElementById('tools-table-body');
+            const searchTerm = document.getElementById('search-tool').value.toLowerCase();
+            const statusFilter = document.getElementById('filter-status').value;
+            const responsibleFilter = document.getElementById('filter-responsible').value;
+            
+            // Clear table body
+            tableBody.innerHTML = '';
+            
+            // Filter tools
+            const filteredTools = tools.filter(tool => {
+                const matchesSearch = tool.code.toLowerCase().includes(searchTerm) || 
+                                     tool.name.toLowerCase().includes(searchTerm);
+                const matchesStatus = statusFilter === 'all' || tool.status === statusFilter;
+                const matchesResponsible = responsibleFilter === 'all' || 
+                                         (responsibleFilter === '' && !tool.responsible) || 
+                                         tool.responsible === responsibleFilter;
+                
+                return matchesSearch && matchesStatus && matchesResponsible;
+            });
+            
+            // Show empty state if no tools match filters
+            if (filteredTools.length === 0) {
+                document.getElementById('empty-state').classList.remove('hidden');
+                return;
+            } else {
+                document.getElementById('empty-state').classList.add('hidden');
+            }
+            
+            // Add rows for each filtered tool
+            filteredTools.forEach(tool => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                
+                // Status badge styling
+                let statusClass = '';
+                let statusText = '';
+                switch(tool.status) {
+                    case 'active':
+                        statusClass = 'status-active';
+                        statusText = 'Disponible';
+                        break;
+                    case 'assigned':
+                        statusClass = 'status-active';
+                        statusText = 'Asignada';
+                        break;
+                    case 'maintenance':
+                        statusClass = 'status-maintenance';
+                        statusText = 'Mantenimiento';
+                        break;
+                    case 'lost':
+                        statusClass = 'status-lost';
+                        statusText = 'Perdida/Dañada';
+                        break;
+                }
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${tool.code}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${tool.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${getTypeText(tool.type)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
+                            ${statusText}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${tool.responsible || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${tool.assignmentDate || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${tool.nextMaintenance || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="viewToolDetail(${tool.id})" class="text-blue-600 hover:text-blue-900 mr-3">Ver</button>
+                        <button onclick="editTool(${tool.id})" class="text-green-600 hover:text-green-900">Editar</button>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Get tool type text
+        function getTypeText(type) {
+            const types = {
+                'electric': 'Eléctrica',
+                'manual': 'Manual',
+                'measuring': 'Medición',
+                'safety': 'Seguridad',
+                'other': 'Otros'
+            };
+            return types[type] || type;
+        }
+
+        // Update stats cards
+        function updateStats() {
+            document.getElementById('total-tools').textContent = tools.length;
+            
+            const maintenanceTools = tools.filter(t => t.status === 'maintenance').length;
+            document.getElementById('maintenance-tools').textContent = maintenanceTools;
+            
+            // Find the next maintenance date among all tools
+            const maintenanceDates = tools
+                .filter(t => t.nextMaintenance)
+                .map(t => new Date(t.nextMaintenance))
+                .filter(date => !isNaN(date.getTime()));
+            
+            if (maintenanceDates.length > 0) {
+                const nextDate = new Date(Math.min(...maintenanceDates.map(date => date.getTime())));
+                document.getElementById('next-maintenance').textContent = nextDate.toLocaleDateString();
+            }
+        }
+
+        // Populate responsible filter dropdown
+        function populateResponsibleFilter() {
+            const select = document.getElementById('filter-responsible');
+            
+            // Clear existing options except "All"
+            select.innerHTML = '<option value="all">Todos</option>';
+            select.innerHTML += '<option value="">Sin asignar</option>';
+            
+            // Add unique responsibles
+            const uniqueResponsibles = [...new Set(responsibles)];
+            uniqueResponsibles.forEach(responsible => {
+                const option = document.createElement('option');
+                option.value = responsible;
+                option.textContent = responsible;
+                select.appendChild(option);
+            });
+        }
+
+        // Modal functions
+        function openModal(modalId) {
+            if (modalId === 'add-tool') {
+                document.getElementById('add-tool-modal').classList.remove('hidden');
+                document.getElementById('add-tool-form').reset();
+                currentToolId = null;
+            } else if (modalId === 'report') {
+                document.getElementById('report-modal').classList.remove('hidden');
+                generateReportData();
+            }
+        }
+
+        function closeModal(modalId) {
+            if (modalId === 'add-tool') {
+                document.getElementById('add-tool-modal').classList.add('hidden');
+            } else if (modalId === 'tool-detail') {
+                document.getElementById('tool-detail-modal').classList.add('hidden');
+            } else if (modalId === 'report') {
+                document.getElementById('report-modal').classList.add('hidden');
+            }
+            currentToolId = null;
+        }
+
+        // Add or edit a tool
+        function addTool() {
+            const form = document.getElementById('add-tool-form');
+            const formData = new FormData(form);
+            
+            const toolData = {
+                code: formData.get('code'),
+                name: formData.get('name'),
+                type: formData.get('type'),
+                status: formData.get('status'),
+                responsible: formData.get('responsible'),
+                assignmentDate: formData.get('assignmentDate'),
+                nextMaintenance: formData.get('nextMaintenance'),
+                location: formData.get('location'),
+                notes: formData.get('notes'),
+                maintenanceHistory: []
+            };
+            
+            if (currentToolId) {
+                // Edit existing tool
+                const index = tools.findIndex(t => t.id === currentToolId);
+                if (index !== -1) {
+                    toolData.id = currentToolId;
+                    toolData.maintenanceHistory = tools[index].maintenanceHistory;
+                    tools[index] = toolData;
+                }
+            } else {
+                // Add new tool
+                toolData.id = tools.length > 0 ? Math.max(...tools.map(t => t.id)) + 1 : 1;
+                tools.push(toolData);
+                
+                // Add new responsible if not already in list
+                if (toolData.responsible && !responsibles.includes(toolData.responsible)) {
+                    responsibles.push(toolData.responsible);
+                    populateResponsibleFilter();
+                }
+            }
+            
+            renderToolsTable();
+            updateStats();
+            closeModal('add-tool');
+        }
+
+        // View tool details
+        function viewToolDetail(toolId) {
+            const tool = tools.find(t => t.id === toolId);
+            if (!tool) return;
+            
+            currentToolId = toolId;
+            
+            // Populate detail fields
+            document.getElementById('detail-code').textContent = tool.code;
+            document.getElementById('detail-name').textContent = tool.name;
+            document.getElementById('detail-type').textContent = getTypeText(tool.type);
+            
+            // Status with color
+            const statusElement = document.getElementById('detail-status');
+            statusElement.textContent = tool.status === 'active' ? 'Disponible' : 
+                                       tool.status === 'assigned' ? 'Asignada' : 
+                                       tool.status === 'maintenance' ? 'Mantenimiento' : 'Perdida/Dañada';
+            if (tool.status === 'active') {
+                statusElement.classList.add('text-green-600');
+            } else if (tool.status === 'assigned') {
+                statusElement.classList.add('text-blue-600');
+            } else if (tool.status === 'maintenance') {
+                statusElement.classList.add('text-yellow-600');
+            } else {
+                statusElement.classList.add('text-red-600');
+            }
+            
+            document.getElementById('detail-responsible').textContent = tool.responsible || '-';
+            document.getElementById('detail-assignment-date').textContent = tool.assignmentDate || '-';
+            document.getElementById('detail-next-maintenance').textContent = tool.nextMaintenance || '-';
+            document.getElementById('detail-location').textContent = tool.location || '-';
+            document.getElementById('detail-notes').textContent = tool.notes || '-';
+            
+            // Populate maintenance history
+            const historyList = document.getElementById('maintenance-history');
+            historyList.innerHTML = '';
+            
+            if (tool.maintenanceHistory.length === 0) {
+                historyList.innerHTML = '<li class="text-gray-500">No hay registros de mantenimiento</li>';
+            } else {
+                tool.maintenanceHistory.forEach(date => {
+                    const item = document.createElement('li');
+                    item.className = 'bg-gray-50 p-2 rounded flex justify-between items-center';
+                    item.innerHTML = `
+                        <span>${date}</span>
+                        <button onclick="removeMaintenance('${date}')" class="text-red-500 hover:text-red-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    `;
+                    historyList.appendChild(item);
+                });
+            }
+            
+            // Set up edit and delete buttons
+            document.getElementById('edit-tool-btn').onclick = function() { editTool(toolId); };
+            document.getElementById('delete-tool-btn').onclick = function() { deleteTool(toolId); };
+            
+            document.getElementById('tool-detail-modal').classList.remove('hidden');
+        }
+
+        // Edit a tool
+        function editTool(toolId) {
+            const tool = tools.find(t => t.id === toolId);
+            if (!tool) return;
+            
+            currentToolId = toolId;
+            
+            // Set form values
+            const form = document.getElementById('add-tool-form');
+            form.elements['code'].value = tool.code;
+            form.elements['name'].value = tool.name;
+            form.elements['type'].value = tool.type;
+            form.elements['status'].value = tool.status;
+            form.elements['responsible'].value = tool.responsible || '';
+            form.elements['assignmentDate'].value = tool.assignmentDate || '';
+            form.elements['nextMaintenance'].value = tool.nextMaintenance || '';
+            form.elements['location'].value = tool.location || '';
+            form.elements['notes'].value = tool.notes || '';
+            
+            // Change modal title
+            document.querySelector('#add-tool-modal .text-xl').textContent = 'Editar Herramienta';
+            
+            // Close detail modal and open edit modal
+            closeModal('tool-detail');
+            document.getElementById('add-tool-modal').classList.remove('hidden');
+        }
+
+        // Delete a tool
+        function deleteTool(toolId) {
+            if (confirm('¿Estás seguro de que deseas eliminar esta herramienta? Esta acción no se puede deshacer.')) {
+                tools = tools.filter(t => t.id !== toolId);
+                renderToolsTable();
+                updateStats();
+                closeModal('tool-detail');
+            }
+        }
+
+        // Add maintenance date
+        function addMaintenance() {
+            const dateInput = document.getElementById('new-maintenance-date');
+            const date = dateInput.value;
+            
+            if (!date) {
+                alert('Por favor selecciona una fecha');
+                return;
+            }
+            
+            const toolIndex = tools.findIndex(t => t.id === currentToolId);
+            if (toolIndex === -1) return;
+            
+            // Add date if not already present
+            if (!tools[toolIndex].maintenanceHistory.includes(date)) {
+                tools[toolIndex].maintenanceHistory.unshift(date);
+                tools[toolIndex].maintenanceHistory.sort((a, b) => new Date(b) - new Date(a));
+                
+                // Update display
+                viewToolDetail(currentToolId);
+            }
+            
+            dateInput.value = '';
+        }
+
+        // Remove maintenance date
+        function removeMaintenance(date) {
+            const toolIndex = tools.findIndex(t => t.id === currentToolId);
+            if (toolIndex === -1) return;
+            
+            tools[toolIndex].maintenanceHistory = tools[toolIndex].maintenanceHistory.filter(d => d !== date);
+            viewToolDetail(currentToolId);
+        }
+
+        // Generate report
+        function generateReport() {
+            openModal('report');
+        }
+
+        // Generate report data
+        function generateReportData() {
+            // Update report date
+            document.getElementById('report-date').textContent = new Date().toLocaleDateString();
+            
+            // Update totals
+            document.getElementById('report-total').textContent = tools.length;
+            document.getElementById('report-lost').textContent = tools.filter(t => t.status === 'lost').length;
+            
+            // Update status counts
+            document.getElementById('report-available').textContent = tools.filter(t => t.status === 'active').length;
+            document.getElementById('report-assigned').textContent = tools.filter(t => t.status === 'assigned').length;
+            document.getElementById('report-maintenance').textContent = tools.filter(t => t.status === 'maintenance').length;
+            document.getElementById('report-lost-damaged').textContent = tools.filter(t => t.status === 'lost').length;
+            
+            // Update maintenance table
+            const maintenanceBody = document.getElementById('report-maintenance-body');
+            maintenanceBody.innerHTML = '';
+            
+            // Get tools with upcoming maintenance (within next 30 days)
+            const upcomingMaintenanceTools = tools
+                .filter(t => t.nextMaintenance)
+                .map(t => ({
+                    ...t,
+                    daysUntil: Math.floor((new Date(t.nextMaintenance) - new Date()) / (1000 * 60 * 60 * 24))
+                }))
+                .filter(t => t.daysUntil >= 0 && t.daysUntil <= 30)
+                .sort((a, b) => a.daysUntil - b.daysUntil);
+            
+            if (upcomingMaintenanceTools.length === 0) {
+                maintenanceBody.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="px-6 py-4 text-center text-gray-500">No hay herramientas con mantenimiento próximo</td>
+                    </tr>
+                `;
+            } else {
+                upcomingMaintenanceTools.forEach(tool => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${tool.name} (${tool.code})</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${tool.responsible || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${tool.nextMaintenance} (en ${tool.daysUntil} días)
+                        </td>
+                    `;
+                    maintenanceBody.appendChild(row);
+                });
+            }
+            
+            // Render tool type chart
+            renderToolTypeChart();
+        }
+
+        // Render tool type chart
+        function renderToolTypeChart() {
+            const ctx = document.getElementById('tool-type-chart').getContext('2d');
+            
+            // Count tools by type
+            const typeCounts = {
+                electric: tools.filter(t => t.type === 'electric').length,
+                manual: tools.filter(t => t.type === 'manual').length,
+                measuring: tools.filter(t => t.type === 'measuring').length,
+                safety: tools.filter(t => t.type === 'safety').length,
+                other: tools.filter(t => t.type === 'other').length
+            };
+            
+            // Filter out empty types
+            const labels = [];
+            const data = [];
+            const backgroundColors = ['#6366F1', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+            
+            Object.entries(typeCounts).forEach(([type, count], index) => {
+                if (count > 0) {
+                    labels.push(getTypeText(type));
+                    data.push(count);
+                }
+            });
+            
+            // Destroy existing chart if it exists
+            if (window.toolTypeChart) {
+                window.toolTypeChart.destroy();
+            }
+            
+            // Create new chart
+            window.toolTypeChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: backgroundColors.slice(0, labels.length),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Print report
+        function printReport() {
+            window.print();
+        }
+
+        // Export to Excel (simulated)
+        function exportToExcel() {
+            alert('En una aplicación real, esto exportaría los datos a un archivo Excel');
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</body>
+</html>
