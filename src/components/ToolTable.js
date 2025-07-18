@@ -3,31 +3,31 @@ import ToolCard from './ToolCard';
 
 const ToolTable = ({ tools, editTool, deleteTool, setCurrentTool, openModal, searchTerm, statusFilter, responsibleFilter }) => {
 
-  // const [filteredTools, setFilteredTools] = useState(tools);
+  const [filteredTools, setFilteredTools] = useState(tools);
 
-  // useEffect(() => {
-  //   filterTools();
-  // }, [searchTerm, statusFilter, responsibleFilter]);
+  useEffect(() => {
+    filterTools();
+  }, [tools, searchTerm, statusFilter, responsibleFilter]);
 
   // Filter tools
-  // const filterTools = () => {
-  //   const filteredTools = tools.filter(tool => {
-  //     const matchesSearch = tool.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //       tool.name.toLowerCase().includes(searchTerm.toLowerCase());
-  //     const matchesStatus = statusFilter === 'all' || tool.status === statusFilter;
-  //     const matchesResponsible = responsibleFilter === 'all' ||
-  //       (responsibleFilter === '' && !tool.responsible) ||
-  //       tool.responsible === responsibleFilter;
+  const filterTools = () => {
+    const filteredTools = tools.filter(tool => {
+      const matchesSearch = tool.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        tool.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || tool.status === statusFilter;
+      const matchesResponsible = responsibleFilter === 'all' ||
+        (responsibleFilter === '' && !tool.responsible) ||
+        tool.responsible === responsibleFilter;
+      return matchesSearch && matchesStatus && matchesResponsible;
+    });
+    setFilteredTools(filteredTools);
+    // if (filteredTools.length === 0) {
+    //   //Manejar cuando no hay elementos
+    // } else {
+    //   setFilteredTools(filteredTools);
+    // }
 
-  //     return matchesSearch && matchesStatus && matchesResponsible;
-  //   });
-  //   if (filteredTools.length === 0) {
-  //     //Manejar cuando no hay elementos
-  //   } else {
-  //     // setFilteredTools(filteredTools);
-  //   }
-
-  // }
+  }
 
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -46,7 +46,7 @@ const ToolTable = ({ tools, editTool, deleteTool, setCurrentTool, openModal, sea
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {tools.map(tool => (
+            {filteredTools.map(tool => (
               <ToolCard key={tool.id} tool={tool} deleteTool={deleteTool} setCurrentTool={setCurrentTool} openModal={openModal} />
             ))}
           </tbody>
