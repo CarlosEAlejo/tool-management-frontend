@@ -18,10 +18,6 @@ const ToolTable = ({ tools, editTool, deleteTool, setCurrentTool, openModal, sea
       const matchesResponsible = responsibleFilter === 'all' ||
         (responsibleFilter === '' && !tool.responsible) ||
         tool.responsible === responsibleFilter;
-      console.log('matchesSearch', matchesSearch);
-      console.log('matchesStatus', matchesStatus);
-      console.log('matchesResponsible', matchesResponsible);
-      console.log('result', matchesSearch && matchesStatus && matchesResponsible);
       return matchesSearch && matchesStatus && matchesResponsible;
     });
     setFilteredTools(filteredTools);
