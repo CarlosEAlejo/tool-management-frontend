@@ -1,10 +1,21 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+
 
 const ReportModal = ({ tools, stats, closeModal, modalType }) => {
-    const totalLost = tools.filter(t => t.status === 'lost').length;
-    const totalAvailable = tools.filter(t => t.status === 'active').length;
-    const totalAssigned = tools.filter(t => t.status === 'assigned').length;
-    const totalMaintenance = tools.filter(t => t.status === 'maintenance').length;
+
+    const [totalLost, setTotalLost] = useState(0);
+    const [totalAvailable, setTotalAvailable] = useState(0);
+    const [totalAssigned, setTotalAssigned] = useState(0);
+    const [totalMaintenance, setTotalMaintenance] = useState(0);
+
+    useEffect(() => {
+        if (tools !== null) {
+            setTotalLost(tools.filter(t => t.status === 'lost').length)
+            setTotalAvailable(tools.filter(t => t.status === 'active').length)
+            setTotalAssigned(tools.filter(t => t.status === 'assigned').length)
+            setTotalMaintenance(tools.filter(t => t.status === 'maintenance').length)
+        }
+    }, [tools]);
 
     if (modalType !== 'report') return null; // Solo muestra el modal si el tipo es 'report'
 
