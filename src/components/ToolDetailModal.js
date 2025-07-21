@@ -1,14 +1,9 @@
 import React from 'react';
 
-const ToolDetailModal = ({ tool, editTool, closeModal, modalType }) => {
+const ToolDetailModal = ({ tool, closeModal, openModal, modalType }) => {
     if (!tool) return null;
 
-    const handleEdit = () => {
-        editTool(tool);
-        closeModal();
-    };
-    
-    if (modalType !== 'details') return null; // Solo muestra el modal si el tipo es 'add-tool'
+    if (modalType !== 'details') return null; // Solo muestra el modal si el tipo es 'details'
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -62,7 +57,7 @@ const ToolDetailModal = ({ tool, editTool, closeModal, modalType }) => {
                     </div>
                     <div className="mt-6 flex justify-end space-x-3">
                         <button onClick={closeModal} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">Cerrar</button>
-                        <button onClick={handleEdit} className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors">Editar</button>
+                        <button onClick={() => openModal('edit-tool')} className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors">Editar</button>
                     </div>
                 </div>
             </div>

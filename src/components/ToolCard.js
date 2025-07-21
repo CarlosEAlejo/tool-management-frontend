@@ -22,7 +22,7 @@ const ToolCard = ({ tool, deleteTool, setCurrentTool, openModal }) => {
   };
 
   const handleDelete = () => {
-    deleteTool(tool.id);
+    deleteTool(tool);
   };
 
   const handleStatus = () => {

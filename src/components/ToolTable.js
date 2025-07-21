@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import ToolCard from './ToolCard';
+import ConfirmationModal from './ConfirmationModal';
 
 const ToolTable = ({ tools, editTool, deleteTool, setCurrentTool, openModal, searchTerm, statusFilter, responsibleFilter }) => {
 
-  const [filteredTools, setFilteredTools] = useState(tools);
+  const [filteredTools, setFilteredTools] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [toolToDelete, setToolToDelete] = useState(null);
 
   useEffect(() => {
-    filterTools();
+    if (tools) {
+      filterTools();
+    }
   }, [tools, searchTerm, statusFilter, responsibleFilter]);
 
   // Filter tools
@@ -29,6 +34,19 @@ const ToolTable = ({ tools, editTool, deleteTool, setCurrentTool, openModal, sea
 
   }
 
+  const handleDelete = (tool) => {
+    setToolToDelete(tool);
+    setIsModalOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (toolToDelete) {
+      deleteTool(toolToDelete.id);
+      setToolToDelete(null);
+    }
+    setIsModalOpen(false);
+  };
+
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <div className="overflow-x-auto">
@@ -47,10 +65,16 @@ const ToolTable = ({ tools, editTool, deleteTool, setCurrentTool, openModal, sea
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredTools.map(tool => (
-              <ToolCard key={tool.id} tool={tool} deleteTool={deleteTool} setCurrentTool={setCurrentTool} openModal={openModal} />
+              <ToolCard key={tool.id} tool={tool} deleteTool={handleDelete} setCurrentTool={setCurrentTool} openModal={openModal} />
             ))}
           </tbody>
         </table>
+        <ConfirmationModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onConfirm={confirmDelete}
+          message={`¿Estás seguro de que deseas eliminar la herramienta "${toolToDelete ? toolToDelete.name : ''}"?`}
+        />
       </div>
     </div>
   );
