@@ -6,6 +6,7 @@ import ToolDetailModal from './components/ToolDetailModal';
 import ReportModal from './components/ReportModal';
 import Stats from './components/Stats';
 import Filters from './components/Filters';
+import LoadingComponent from './components/LoadingComponent';
 import { GetTool, CreateTool, UpdateTool, DeleteTool } from './api/Tools';
 
 const App = () => {
@@ -103,7 +104,7 @@ const App = () => {
   return (
     <>
       {loading ? (
-        <div className="loader">Cargando...</div>
+        <LoadingComponent />
       ) : (
         <div className="container mx-auto px-4 py-8 bg-gray-50">
           <Header openModal={openModal} generateReport={generateReport} />
