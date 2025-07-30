@@ -93,7 +93,8 @@ const AddToolModal = ({ addTool, editTool, closeModal, modalType, tool }) => {
                   <option value="active">Disponible</option>
                   <option value="assigned">Asignada</option>
                   <option value="maintenance">Mantenimiento</option>
-                  <option value="lost">Perdida/Dañada</option>
+                  <option value="lost">Perdida</option>
+                  <option value="damaged">Dañada</option>
                 </select>
               </div>
               <div>
