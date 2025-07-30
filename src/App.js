@@ -6,14 +6,17 @@ import ToolDetailModal from './components/ToolDetailModal';
 import ReportModal from './components/ReportModal';
 import Stats from './components/Stats';
 import Filters from './components/Filters';
+import LoadingComponent from './components/LoadingComponent';
 import { GetTool, CreateTool, UpdateTool, DeleteTool } from './api/Tools';
+import { initialPerson } from './data';
+
 
 const App = () => {
   const [tool, setTool] = useState(null);
   const [tools, setTools] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [responsibles, setResponsibles] = useState([]);
+  const [responsibles, setResponsibles] = useState(initialPerson);
   const [statusFilter, setStatusFilter] = useState('all');
   const [responsibleFilter, setResponsibleFilter] = useState('all');
   const [modalType, setModalType] = useState(null);
@@ -103,7 +106,7 @@ const App = () => {
   return (
     <>
       {loading ? (
-        <div className="loader">Cargando...</div>
+        <LoadingComponent />
       ) : (
         <div className="container mx-auto px-4 py-8 bg-gray-50">
           <Header openModal={openModal} generateReport={generateReport} />
