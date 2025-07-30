@@ -72,7 +72,6 @@ const ToolCard = ({ tool, deleteTool, setCurrentTool, openModal }) => {
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{tool.responsible || '-'}</td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{tool.assignmentDate || '-'}</td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{tool.nextMaintenance || '-'}</td>
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
         <div className="tooltip">
           <button onClick={handleDetails} className="text-blue-600 hover:text-blue-900 mr-3"><FaEye className="h-4 w-4" /></button>

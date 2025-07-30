@@ -24,7 +24,7 @@ const App = () => {
 
   useEffect(() => {
     // Solo llama a fetchTools si tools está vacío
-    if (tools.length === 0) {
+    if (tools) {
       fetchTools();
     }
   }, [tools]);
