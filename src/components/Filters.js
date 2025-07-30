@@ -25,7 +25,8 @@ const Filters = ({ searchTerm, setSearchTerm, statusFilter, setStatusFilter, res
                         <option value="active">Disponible</option>
                         <option value="assigned">Asignada</option>
                         <option value="maintenance">Mantenimiento</option>
-                        <option value="lost">Perdida/Dañada</option>
+                        <option value="lost">Perdida</option>
+                        <option value="damaged">Dañada</option>
                     </select>
                 </div>
                 <div className="w-full md:w-1/3">

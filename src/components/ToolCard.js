@@ -41,7 +41,11 @@ const ToolCard = ({ tool, deleteTool, setCurrentTool, openModal }) => {
         break;
       case 'lost':
         setStatusClass('status-lost');
-        setStatusText('Perdida/Dañada');
+        setStatusText('Perdida');
+        break;
+      case 'damaged':
+        setStatusClass('status-lost');
+        setStatusText('Dañada');
         break;
     }
   }
