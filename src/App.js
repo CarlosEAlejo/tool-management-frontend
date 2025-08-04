@@ -13,7 +13,7 @@ import { initialPerson } from './data';
 
 const App = () => {
   const [tool, setTool] = useState(null);
-  const [tools, setTools] = useState([]);
+  const [tools, setTools] = useState();
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [responsibles, setResponsibles] = useState(initialPerson);
@@ -24,7 +24,7 @@ const App = () => {
 
   useEffect(() => {
     // Solo llama a fetchTools si tools está vacío
-    if (tools) {
+    if (!tools) {
       fetchTools();
     }
   }, [tools]);
