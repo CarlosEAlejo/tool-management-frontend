@@ -94,16 +94,16 @@ const AddToolModal = ({ addTool, editTool, closeModal, modalType, tool }) => {
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Código de Herramienta</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Código de Herramienta*</label>
                 <input type="text" name="code" required value={formData.code} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre*</label>
                 <input type="text" name="name" required value={formData.name} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
-                <select name="type" value={formData.type} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo*</label>
+                <select name="type" value={formData.type} required onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <option value="electric">Eléctrica</option>
                   <option value="manual">Manual</option>
                   <option value="measuring">Medición</option>
@@ -113,15 +113,15 @@ const AddToolModal = ({ addTool, editTool, closeModal, modalType, tool }) => {
               </div>
               {modalType === 'add-tool' ? (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
-                  <select name="status" value={formData.status} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Estado*</label>
+                  <select name="status" value={formData.status} required onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="active">Disponible</option>
                   </select>
                 </div>
               ) : (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
-                  <select name="status" value={formData.status} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Estado*</label>
+                  <select name="status" value={formData.status} required onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="active">Disponible</option>
                     <option value="assigned">Asignada</option>
                     <option value="maintenance">Mantenimiento</option>
@@ -133,30 +133,30 @@ const AddToolModal = ({ addTool, editTool, closeModal, modalType, tool }) => {
               {(formData.status !== 'maintenance' && formData.status !== 'active') && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Responsable</label>
-                    <input type="text" name="responsible" value={formData.responsible} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Responsable*</label>
+                    <input type="text" name="responsible" required value={formData.responsible} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Asignación</label>
-                    <input type="date" name="assignmentDate" value={formData.assignmentDate} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Asignación*</label>
+                    <input type="date" name="assignmentDate" required value={formData.assignmentDate} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
                   </div>
                 </>
               )}
               {formData.status === 'maintenance' && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Fecha del Mantenimiento</label>
-                    <input type="date" name="dateMaintenance" value={formData.dateMaintenance} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Fecha del Mantenimiento*</label>
+                    <input type="date" name="dateMaintenance" required value={formData.dateMaintenance} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Próximo Mantenimiento</label>
-                    <input type="date" name="nextMaintenance" value={formData.nextMaintenance} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Próximo Mantenimiento*</label>
+                    <input type="date" name="nextMaintenance" required value={formData.nextMaintenance} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
                   </div>
                 </>
               )}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Ubicación/Almacén</label>
-                <input type="text" name="location" value={formData.location} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Ubicación/Almacén*</label>
+                <input type="text" name="location" required value={formData.location} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
               {formData.status === 'damaged' && (
                 <>
@@ -165,6 +165,7 @@ const AddToolModal = ({ addTool, editTool, closeModal, modalType, tool }) => {
                     <input
                       type="checkbox"
                       name="deterioration"
+                      required
                       checked={formData.deterioration}
                       onChange={(e) => setFormData(prev => ({ ...prev, deterioration: e.target.checked }))}
                       className="mt-3 mr-3 h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
