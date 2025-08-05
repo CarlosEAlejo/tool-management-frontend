@@ -26,11 +26,6 @@ const ToolTable = ({ tools, editTool, deleteTool, setCurrentTool, openModal, sea
       return matchesSearch && matchesStatus && matchesResponsible;
     });
     setFilteredTools(filteredTools);
-    // if (filteredTools.length === 0) {
-    //   //Manejar cuando no hay elementos
-    // } else {
-    //   setFilteredTools(filteredTools);
-    // }
 
   }
 
