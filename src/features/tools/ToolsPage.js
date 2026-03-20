@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../auth/context/AuthContext';
 import { ConfirmDialog } from '../../shared/components/ConfirmDialog';
 import { Loader } from '../../shared/components/Loader';
 import { ReportModal } from './components/ReportModal';
@@ -13,10 +15,13 @@ import { useToolModal } from './hooks/useToolModal';
 import { useTools } from './hooks/useTools';
 
 export const ToolsPage = () => {
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const { tools, loading, error, mutationError, isSaving, isDeleting, create, update, remove, clearMutationError } = useTools();
   const { filters, filteredTools, responsibles, stats, setSearch, setStatus, setResponsible } = useToolFilters(tools);
   const { modal, selectedTool, open, close } = useToolModal();
   const [toolToDelete, setToolToDelete] = useState(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   if (loading) {
     return <Loader />;
@@ -33,10 +38,26 @@ export const ToolsPage = () => {
     }
   };
 
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      navigate('/login', { replace: true });
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-8">
       <div className="mx-auto max-w-7xl">
-        <ToolsHeader onCreate={() => open('create')} onReport={() => open('report')} />
+        <ToolsHeader
+          userEmail={user?.email || ''}
+          onCreate={() => open('create')}
+          onReport={() => open('report')}
+          onLogout={handleLogout}
+          isLoggingOut={isLoggingOut}
+        />
 
         {error ? <div className="mb-6 rounded-lg bg-rose-100 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
         {mutationError && !toolToDelete && modal !== 'create' && modal !== 'edit' ? (
