@@ -4,18 +4,12 @@ import { formatDate } from '../utils/utils';
 const Stats = ({ tools, updateStats }) => {
     const [stats, setStats] = useState({
         total: 0,
-        active: 0,
-        assigned: 0,
-        damaged: 0,
         maintenance: 0,
         nextMaintenance: '-'
     });
 
     const updateComponentStats = () => {
         const total = tools.length;
-        const active = tools.filter(t => t.status === 'active').length;
-        const assigned = tools.filter(t => t.status === 'assigned').length;
-        const damaged = tools.filter(t => t.status === 'damaged').length;
         const maintenance = tools.filter(t => t.status === 'maintenance').length;
 
         let nextMaintenanceDate = '-';
@@ -31,9 +25,6 @@ const Stats = ({ tools, updateStats }) => {
 
         const newStats = {
             total,
-            active,
-            assigned,
-            damaged,
             maintenance,
             nextMaintenance: formatDate(nextMaintenanceDate),
         };
@@ -53,18 +44,6 @@ const Stats = ({ tools, updateStats }) => {
             <div className="bg-white rounded-lg shadow p-6">
                 <h3 className="text-gray-500 text-sm font-medium">Total Herramientas</h3>
                 <p className="text-2xl font-bold text-gray-800 mt-1">{stats.total}</p>
-            </div>
-            <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-gray-500 text-sm font-medium">Disponibles</h3>
-                <p className="text-2xl font-bold text-green-800 mt-1">{stats.active}</p>
-            </div>
-            <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-gray-500 text-sm font-medium">Asignadas</h3>
-                <p className="text-2xl font-bold text-blue-800 mt-1">{stats.assigned}</p>
-            </div>
-            <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-gray-500 text-sm font-medium">Dañadas</h3>
-                <p className="text-2xl font-bold text-red-800 mt-1">{stats.damaged}</p>
             </div>
             <div className="bg-white rounded-lg shadow p-6">
                 <h3 className="text-gray-500 text-sm font-medium">En Mantenimiento</h3>
