@@ -13,7 +13,7 @@ import { useToolModal } from './hooks/useToolModal';
 import { useTools } from './hooks/useTools';
 
 export const ToolsPage = () => {
-  const { tools, loading, error, create, update, remove } = useTools();
+  const { tools, loading, error, mutationError, isSaving, isDeleting, create, update, remove, clearMutationError } = useTools();
   const { filters, filteredTools, responsibles, stats, setSearch, setStatus, setResponsible } = useToolFilters(tools);
   const { modal, selectedTool, open, close } = useToolModal();
   const [toolToDelete, setToolToDelete] = useState(null);
@@ -27,8 +27,10 @@ export const ToolsPage = () => {
       return;
     }
 
-    await remove(toolToDelete.id);
-    setToolToDelete(null);
+    const result = await remove(toolToDelete.id);
+    if (result?.ok) {
+      setToolToDelete(null);
+    }
   };
 
   return (
@@ -37,6 +39,9 @@ export const ToolsPage = () => {
         <ToolsHeader onCreate={() => open('create')} onReport={() => open('report')} />
 
         {error ? <div className="mb-6 rounded-lg bg-rose-100 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
+        {mutationError && !toolToDelete && modal !== 'create' && modal !== 'edit' ? (
+          <div className="mb-6 rounded-lg bg-rose-100 px-4 py-3 text-sm text-rose-700">{mutationError}</div>
+        ) : null}
 
         <ToolStats stats={stats} />
         <ToolFilters
@@ -52,12 +57,32 @@ export const ToolsPage = () => {
           tools={filteredTools}
           onView={(tool) => open('details', tool)}
           onEdit={(tool) => open('edit', tool)}
-          onDelete={(tool) => setToolToDelete(tool)}
+          onDelete={(tool) => {
+            clearMutationError();
+            setToolToDelete(tool);
+          }}
         />
       </div>
 
-      <ToolFormModal isOpen={modal === 'create'} mode="create" onClose={close} onSubmit={create} />
-      <ToolFormModal isOpen={modal === 'edit'} mode="edit" tool={selectedTool} onClose={close} onSubmit={update} />
+      <ToolFormModal
+        isOpen={modal === 'create'}
+        mode="create"
+        error={modal === 'create' ? mutationError : ''}
+        isSaving={isSaving}
+        onClose={close}
+        onSubmit={create}
+        onClearError={clearMutationError}
+      />
+      <ToolFormModal
+        isOpen={modal === 'edit'}
+        mode="edit"
+        tool={selectedTool}
+        error={modal === 'edit' ? mutationError : ''}
+        isSaving={isSaving}
+        onClose={close}
+        onSubmit={update}
+        onClearError={clearMutationError}
+      />
       <ToolDetailModal
         isOpen={modal === 'details'}
         tool={selectedTool}
@@ -68,9 +93,12 @@ export const ToolsPage = () => {
       <ConfirmDialog
         isOpen={Boolean(toolToDelete)}
         title="Confirmacion"
-        message={`Estas seguro de que deseas eliminar la herramienta "${toolToDelete?.name || ''}"?`}
-        confirmLabel="Eliminar"
-        onCancel={() => setToolToDelete(null)}
+        message={mutationError ? mutationError : `Estas seguro de que deseas eliminar la herramienta "${toolToDelete?.name || ''}"?`}
+        confirmLabel={isDeleting ? 'Eliminando...' : 'Eliminar'}
+        onCancel={() => {
+          clearMutationError();
+          setToolToDelete(null);
+        }}
         onConfirm={handleDelete}
       />
     </div>

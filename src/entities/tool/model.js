@@ -61,6 +61,38 @@ export const EMPTY_TOOL_FORM = {
   notes: '',
 };
 
+const parseISODate = (value) => {
+  const plainDateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value ?? '');
+  if (plainDateMatch) {
+    return new Date(Number(plainDateMatch[1]), Number(plainDateMatch[2]) - 1, Number(plainDateMatch[3]));
+  }
+
+  return new Date(value);
+};
+
+export const getApiErrorMessage = (error, fallbackMessage) => {
+  const code = error?.response?.data?.code;
+  const details = error?.response?.data?.details;
+
+  if (code === 'validation_error' && details) {
+    return Object.values(details)[0] || fallbackMessage;
+  }
+
+  if (code === 'invalid_id') {
+    return 'El identificador de la herramienta no es valido.';
+  }
+
+  if (code === 'tool_not_found') {
+    return 'La herramienta seleccionada ya no existe.';
+  }
+
+  if (code === 'invalid_json') {
+    return 'Los datos enviados no tienen un formato valido.';
+  }
+
+  return error?.response?.data?.message || error?.message || fallbackMessage;
+};
+
 export const sanitizeToolPayload = (tool) => {
   const payload = {
     ...EMPTY_TOOL_FORM,
@@ -128,7 +160,7 @@ export const buildToolStats = (tools = []) => {
   const maintenanceDates = tools
     .map((tool) => tool.nextMaintenance)
     .filter(Boolean)
-    .map((value) => new Date(value))
+    .map((value) => parseISODate(value))
     .filter((date) => !Number.isNaN(date.getTime()));
 
   return {

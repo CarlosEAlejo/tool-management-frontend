@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { TOOL_STATUS_OPTIONS, filterTools, getResponsibleOptions, mapToolsToReportRows } from '../../../entities/tool/model';
 import { Button } from '../../../shared/components/Button';
 import { SelectField, TextField } from '../../../shared/components/form/Field';
@@ -10,6 +10,22 @@ export const ReportModal = ({ isOpen, onClose, tools, stats }) => {
   const [name, setName] = useState('');
   const [status, setStatus] = useState('all');
   const [responsible, setResponsible] = useState('all');
+
+  useEffect(() => {
+    if (!isOpen) {
+      setName('');
+      setStatus('all');
+      setResponsible('all');
+    }
+  }, [isOpen]);
+
+  const responsibleOptions = useMemo(
+    () => [
+      { value: 'all', label: 'Todos' },
+      ...getResponsibleOptions(tools).map((item) => ({ value: item, label: item })),
+    ],
+    [tools]
+  );
 
   const filteredTools = useMemo(
     () =>
@@ -68,16 +84,7 @@ export const ReportModal = ({ isOpen, onClose, tools, stats }) => {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <TextField label="Nombre del reporte" name="reportName" value={name} onChange={(event) => setName(event.target.value)} />
         <SelectField label="Estado" name="reportStatus" options={TOOL_STATUS_OPTIONS} value={status} onChange={(event) => setStatus(event.target.value)} />
-        <SelectField
-          label="Responsable"
-          name="reportResponsible"
-          options={[
-            { value: 'all', label: 'Todos' },
-            ...getResponsibleOptions(tools).map((item) => ({ value: item, label: item })),
-          ]}
-          value={responsible}
-          onChange={(event) => setResponsible(event.target.value)}
-        />
+        <SelectField label="Responsable" name="reportResponsible" options={responsibleOptions} value={responsible} onChange={(event) => setResponsible(event.target.value)} />
       </div>
     </ModalShell>
   );

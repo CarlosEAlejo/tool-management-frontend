@@ -4,7 +4,7 @@ import { Button } from '../../../shared/components/Button';
 import { ModalShell } from '../../../shared/components/ModalShell';
 import { ToolForm } from './ToolForm';
 
-export const ToolFormModal = ({ isOpen, mode, tool, onClose, onSubmit }) => {
+export const ToolFormModal = ({ isOpen, mode, tool, error, isSaving, onClose, onSubmit, onClearError }) => {
   const [formData, setFormData] = useState(EMPTY_TOOL_FORM);
 
   useEffect(() => {
@@ -13,12 +13,15 @@ export const ToolFormModal = ({ isOpen, mode, tool, onClose, onSubmit }) => {
     }
 
     setFormData(tool ? { ...EMPTY_TOOL_FORM, ...tool } : EMPTY_TOOL_FORM);
-  }, [isOpen, tool]);
+    onClearError?.();
+  }, [isOpen, tool, onClearError]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    await onSubmit(formData);
-    onClose();
+    const result = await onSubmit(formData);
+    if (result?.ok) {
+      onClose();
+    }
   };
 
   return (
@@ -31,12 +34,13 @@ export const ToolFormModal = ({ isOpen, mode, tool, onClose, onSubmit }) => {
           <Button variant="secondary" onClick={onClose}>
             Cancelar
           </Button>
-          <Button type="submit" form="tool-form">
-            Guardar Herramienta
+          <Button type="submit" form="tool-form" disabled={isSaving}>
+            {isSaving ? 'Guardando...' : 'Guardar Herramienta'}
           </Button>
         </div>
       }
     >
+      {error ? <div className="mb-4 rounded-lg bg-rose-100 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
       <form id="tool-form" onSubmit={handleSubmit}>
         <ToolForm value={formData} mode={mode} onChange={setFormData} />
       </form>

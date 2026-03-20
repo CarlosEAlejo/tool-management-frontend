@@ -71,3 +71,34 @@ test('creates and deletes a tool from the UI', async () => {
     expect(screen.queryByText('Taladro')).not.toBeInTheDocument();
   });
 });
+
+test('keeps form open and shows mutation error when create fails', async () => {
+  toolsService.listTools.mockResolvedValue(initialTools);
+  toolsService.createTool.mockRejectedValue({
+    response: { data: { code: 'validation_error', details: { name: 'Nombre requerido' } } },
+  });
+
+  render(<App />);
+
+  await screen.findByText('Taladro');
+  fireEvent.click(screen.getByText(/Nueva Herramienta/i));
+  fireEvent.change(screen.getByLabelText(/Codigo de Herramienta/i), { target: { value: 'TL-2' } });
+  fireEvent.click(screen.getByText(/Guardar Herramienta/i));
+
+  expect(await screen.findByText('Nombre requerido')).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: /Agregar Nueva Herramienta/i })).toBeInTheDocument();
+});
+
+test('shows delete error and keeps row when delete fails', async () => {
+  toolsService.listTools.mockResolvedValue(initialTools);
+  toolsService.deleteTool.mockRejectedValue({ response: { data: { code: 'tool_not_found' } } });
+
+  render(<App />);
+
+  await screen.findByText('Taladro');
+  fireEvent.click(screen.getByLabelText(/Eliminar Taladro/i));
+  fireEvent.click(screen.getByText(/^Eliminar$/i));
+
+  expect(await screen.findByText(/ya no existe/i)).toBeInTheDocument();
+  expect(screen.getByText('Taladro')).toBeInTheDocument();
+});
