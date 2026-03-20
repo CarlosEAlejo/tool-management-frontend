@@ -26,11 +26,6 @@ const ToolTable = ({ tools, editTool, deleteTool, setCurrentTool, openModal, sea
       return matchesSearch && matchesStatus && matchesResponsible;
     });
     setFilteredTools(filteredTools);
-    // if (filteredTools.length === 0) {
-    //   //Manejar cuando no hay elementos
-    // } else {
-    //   setFilteredTools(filteredTools);
-    // }
 
   }
 
@@ -59,7 +54,6 @@ const ToolTable = ({ tools, editTool, deleteTool, setCurrentTool, openModal, sea
               <th scope="col" className="px-6 py-3 text-left whitespace-nowrap text-sm text-gray-500">Estado</th>
               <th scope="col" className="px-6 py-3 text-left whitespace-nowrap text-sm text-gray-500">Responsable</th>
               <th scope="col" className="px-6 py-3 text-left whitespace-nowrap text-sm text-gray-500">Fecha Asignación</th>
-              <th scope="col" className="px-6 py-3 text-left whitespace-nowrap text-sm text-gray-500">Próximo Mant.</th>
               <th scope="col" className="px-6 py-3 text-left whitespace-nowrap text-sm text-gray-500">Acciones</th>
             </tr>
           </thead>

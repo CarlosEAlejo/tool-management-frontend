@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { formatDate } from '../utils/utils';
 
 const Stats = ({ tools, updateStats }) => {
-    const [stats, setStats] = useState({ total: 0, maintenance: 0, nextMaintenance: '-' });
+    const [stats, setStats] = useState({
+        total: 0,
+        maintenance: 0,
+        nextMaintenance: '-'
+    });
 
     const updateComponentStats = () => {
         const total = tools.length;
         const maintenance = tools.filter(t => t.status === 'maintenance').length;
+
         let nextMaintenanceDate = '-';
         const nextMaintenance = tools
             .filter(t => t.nextMaintenance)
@@ -20,7 +26,7 @@ const Stats = ({ tools, updateStats }) => {
         const newStats = {
             total,
             maintenance,
-            nextMaintenance: nextMaintenanceDate,
+            nextMaintenance: formatDate(nextMaintenanceDate),
         };
         setStats(newStats);
         updateStats(newStats)
@@ -45,7 +51,7 @@ const Stats = ({ tools, updateStats }) => {
             </div>
             <div className="bg-white rounded-lg shadow p-6">
                 <h3 className="text-gray-500 text-sm font-medium">Próximo Mantenimiento</h3>
-                <p className="text-2xl font-bold text-blue-800 mt-1">{stats.nextMaintenance}</p>
+                <p className="text-2xl font-bold text-yellow-800 mt-1">{stats.nextMaintenance}</p>
             </div>
         </div>
     );

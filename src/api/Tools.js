@@ -2,9 +2,9 @@ import axios from "axios";
 
 const baseUrl = "http://localhost:8000/herramientas";
 
-export const GetTool = async (id) => {
+export const GetTool = async (data) => {
     try {
-        const response = await axios.get(`${baseUrl}`);
+        const response = await axios.get(`${baseUrl}`, data);
         return response.data;
     } catch (error) {
         console.error('Error al cargar las herramientas:', error);
