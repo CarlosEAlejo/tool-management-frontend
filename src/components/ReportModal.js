@@ -1,19 +1,78 @@
 import React, { useState, useEffect } from 'react';
-
+import { buildQueryParams, formatDate } from '../utils/utils';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
+import Filters from './Filters';
+import { initialPerson } from '../data';
+import { GetTool } from '../api/Tools';
 
 const ReportModal = ({ tools, stats, closeModal, modalType }) => {
 
+    const [loading, setLoading] = useState(true);
+    const [nameReport, setNameReport] = useState('');
+    const [responsibles, setResponsibles] = useState(initialPerson);
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [responsibleFilter, setResponsibleFilter] = useState('all');
+    const [dateToday, setDateToday] = useState(new Date().toLocaleDateString());
     const [totalLost, setTotalLost] = useState(0);
     const [totalAvailable, setTotalAvailable] = useState(0);
     const [totalAssigned, setTotalAssigned] = useState(0);
     const [totalMaintenance, setTotalMaintenance] = useState(0);
 
+    const exportToExcel = (respuesta) => {
+        const reportData = respuesta.map(tool => ({
+            Código: tool.code,
+            Nombre: tool.name,
+            Tipo: tool.type,
+            Estado: tool.status,
+            Responsable: tool.responsible,
+            'Fecha Asignación': tool.assignmentDate,
+            Ubicación: tool.location
+        }));
+        // Crea un nuevo libro de trabajo
+        const wb = XLSX.utils.book_new();
+        // Convierte los datos a una hoja de cálculo
+        const ws = XLSX.utils.json_to_sheet(reportData);
+        // Agrega la hoja al libro de trabajo
+        XLSX.utils.book_append_sheet(wb, ws, 'Herramientas');
+        // Genera el archivo Excel
+        const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        const data = new Blob([excelBuffer], { type: EXCEL_TYPE });
+        saveAs(data, `${nameReport}-${formatDate(dateToday)}.xlsx`);
+    };
+    const EXCEL_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
+
+    const getReportTools = async () => {
+        setLoading(true);
+        const data = buildQueryParams({
+            responsible: responsibleFilter,
+            status: statusFilter,
+            type: null,
+            location: null
+        });
+        await GetTool(data)
+            .then((response) => {
+                console.log('response', response);
+                exportToExcel(response);
+                setLoading(false);
+            })
+            .catch((error) => {
+                console.error('Error al crear el reporte:', error);
+            })
+            .finally(() => {
+                setResponsibleFilter('all');
+                setStatusFilter('all');
+                setNameReport('');
+                closeModal();
+            })
+    };
+
     useEffect(() => {
         if (tools !== null) {
-            setTotalLost(tools.filter(t => t.status === 'lost').length)
-            setTotalAvailable(tools.filter(t => t.status === 'active').length)
-            setTotalAssigned(tools.filter(t => t.status === 'assigned').length)
-            setTotalMaintenance(tools.filter(t => t.status === 'maintenance').length)
+            setTotalLost(tools.filter(t => t.status === 'lost').length);
+            setTotalAvailable(tools.filter(t => t.status === 'active').length);
+            setTotalAssigned(tools.filter(t => t.status === 'assigned').length);
+            setTotalMaintenance(tools.filter(t => t.status === 'maintenance').length);
         }
     }, [tools]);
 
@@ -33,8 +92,8 @@ const ReportModal = ({ tools, stats, closeModal, modalType }) => {
                 <div className="p-6">
                     <div className="flex justify-between mb-6">
                         <div>
-                            <h3 className="text-lg font-medium text-gray-900">Empresa Constructora XYZ</h3>
-                            <p className="text-gray-600">Fecha del reporte: {new Date().toLocaleDateString()}</p>
+                            <h3 className="text-lg font-medium text-gray-900">Empresa Constructora Almendrica</h3>
+                            <p className="text-gray-600">Fecha del reporte: {formatDate(dateToday)}</p>
                         </div>
                         <div className="text-right">
                             <p className="text-gray-600">Total herramientas: {stats.total}</p>
@@ -62,7 +121,18 @@ const ReportModal = ({ tools, stats, closeModal, modalType }) => {
                             </div>
                         </div>
                     </div>
+                    <Filters
+                        reportFilter={true}
+                        nameReport={nameReport}
+                        setNameReport={setNameReport}
+                        statusFilter={statusFilter}
+                        setStatusFilter={setStatusFilter}
+                        responsibleFilter={responsibleFilter}
+                        setResponsibleFilter={setResponsibleFilter}
+                        responsibles={responsibles}
+                    />
                     <div className="mt-6 flex justify-end space-x-3">
+                        <button onClick={getReportTools} className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors">Exportar a Excel</button>
                         <button onClick={closeModal} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">Cerrar</button>
                     </div>
                 </div>

@@ -30,3 +30,13 @@ export const handleStatusText = (status) => {
     };
     return stats[status] || status;
 }
+
+export const buildQueryParams = (filters) => {
+    const params = Object.keys(filters).reduce((acc, key) => {
+        if (filters[key] != null && filters[key] !== "" && filters[key] !== "all") { // Filtra null, undefined y strings vacíos
+            acc[key] = filters[key];
+        }
+        return acc;
+    }, {});
+    return { params };
+};
