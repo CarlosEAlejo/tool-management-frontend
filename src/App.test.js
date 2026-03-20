@@ -1,11 +1,19 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import App from './App';
+import { MemoryRouter } from 'react-router-dom';
+import { ToolsPage } from './features/tools/ToolsPage';
 
 jest.mock('./services/api/toolsService', () => ({
   listTools: jest.fn(),
   createTool: jest.fn(),
   updateTool: jest.fn(),
   deleteTool: jest.fn(),
+}));
+
+jest.mock('./features/auth/context/AuthContext', () => ({
+  useAuth: () => ({
+    user: { email: 'admin@empresa.com' },
+    logout: jest.fn(),
+  }),
 }));
 
 const toolsService = require('./services/api/toolsService');
@@ -36,10 +44,15 @@ beforeEach(() => {
 test('renders the tools page with fetched data', async () => {
   toolsService.listTools.mockResolvedValue(initialTools);
 
-  render(<App />);
+  render(
+    <MemoryRouter>
+      <ToolsPage />
+    </MemoryRouter>
+  );
 
   expect(await screen.findByText(/Gestion de Herramientas/i)).toBeInTheDocument();
   expect(screen.getByText('Taladro')).toBeInTheDocument();
+  expect(screen.getByText('admin@empresa.com')).toBeInTheDocument();
 });
 
 test('creates and deletes a tool from the UI', async () => {
@@ -52,7 +65,11 @@ test('creates and deletes a tool from the UI', async () => {
   }));
   toolsService.deleteTool.mockResolvedValue();
 
-  render(<App />);
+  render(
+    <MemoryRouter>
+      <ToolsPage />
+    </MemoryRouter>
+  );
 
   await screen.findByText('Taladro');
 
@@ -78,7 +95,11 @@ test('keeps form open and shows mutation error when create fails', async () => {
     response: { data: { code: 'validation_error', details: { name: 'Nombre requerido' } } },
   });
 
-  render(<App />);
+  render(
+    <MemoryRouter>
+      <ToolsPage />
+    </MemoryRouter>
+  );
 
   await screen.findByText('Taladro');
   fireEvent.click(screen.getByText(/Nueva Herramienta/i));
@@ -93,7 +114,11 @@ test('shows delete error and keeps row when delete fails', async () => {
   toolsService.listTools.mockResolvedValue(initialTools);
   toolsService.deleteTool.mockRejectedValue({ response: { data: { code: 'tool_not_found' } } });
 
-  render(<App />);
+  render(
+    <MemoryRouter>
+      <ToolsPage />
+    </MemoryRouter>
+  );
 
   await screen.findByText('Taladro');
   fireEvent.click(screen.getByLabelText(/Eliminar Taladro/i));
