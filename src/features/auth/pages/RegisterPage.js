@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { AuthLayout } from '../components/AuthLayout';
 import { useAuth } from '../context/AuthContext';
 
 const initialState = {
@@ -29,7 +30,7 @@ export const RegisterPage = () => {
 
     try {
       await register(form);
-      navigate('/', { replace: true });
+      navigate('/tools', { replace: true });
     } catch (submitError) {
       setError(submitError.message);
     } finally {
@@ -38,79 +39,77 @@ export const RegisterPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-10">
-      <div className="w-full max-w-md rounded-3xl border border-slate-800 bg-white p-8 shadow-2xl shadow-slate-950/20">
-        <div className="mb-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-600">Bootstrap Admin</p>
-          <h1 className="mt-3 text-3xl font-bold text-slate-900">Crear administrador inicial</h1>
-          <p className="mt-2 text-sm text-slate-600">Este registro solo estara disponible mientras no exista un administrador.</p>
-        </div>
-
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <label className="block text-sm font-medium text-slate-700" htmlFor="email">
-            Correo
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              value={form.email}
-              onChange={handleChange}
-              className="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
-              placeholder="admin@empresa.com"
-              required
-            />
-          </label>
-
-          <label className="block text-sm font-medium text-slate-700" htmlFor="password">
-            Contrasena
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              value={form.password}
-              onChange={handleChange}
-              className="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
-              placeholder="Minimo 8 caracteres"
-              required
-            />
-          </label>
-
-          <label className="block text-sm font-medium text-slate-700" htmlFor="confirmPassword">
-            Confirmar contrasena
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              autoComplete="new-password"
-              value={form.confirmPassword}
-              onChange={handleChange}
-              className="mt-1 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
-              placeholder="Repite la contrasena"
-              required
-            />
-          </label>
-
-          {error ? <div className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-300"
-          >
-            {isSubmitting ? 'Creando cuenta...' : 'Crear administrador'}
-          </button>
-        </form>
-
-        <p className="mt-6 text-center text-sm text-slate-600">
+    <AuthLayout
+      eyebrow="Bootstrap admin"
+      title="Crear administrador inicial"
+      description="Configura la primera cuenta con la nueva identidad visual y deja lista la entrada al panel protegido."
+      accent="from-emerald-600 to-cyan-500"
+      footer={
+        <p>
           Si ya existe un administrador, vuelve a{' '}
-          <Link className="font-semibold text-blue-600 hover:text-blue-700" to="/login">
+          <Link className="font-semibold text-emerald-600 transition hover:text-emerald-500" to="/login">
             iniciar sesion
           </Link>
           .
         </p>
-      </div>
-    </div>
+      }
+    >
+      <form className="space-y-5" onSubmit={handleSubmit}>
+        <label className="ui-label" htmlFor="email">
+          Correo
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            value={form.email}
+            onChange={handleChange}
+            className="ui-input"
+            placeholder="admin@empresa.com"
+            required
+          />
+        </label>
+
+        <label className="ui-label" htmlFor="password">
+          Contrasena
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="new-password"
+            value={form.password}
+            onChange={handleChange}
+            className="ui-input"
+            placeholder="Minimo 8 caracteres"
+            required
+          />
+        </label>
+
+        <label className="ui-label" htmlFor="confirmPassword">
+          Confirmar contrasena
+          <input
+            id="confirmPassword"
+            name="confirmPassword"
+            type="password"
+            autoComplete="new-password"
+            value={form.confirmPassword}
+            onChange={handleChange}
+            className="ui-input"
+            placeholder="Repite la contrasena"
+            required
+          />
+        </label>
+
+        {error ? <div className="ui-error">{error}</div> : null}
+
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="inline-flex w-full items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#059669,#0891b2)] px-4 py-3 text-sm font-semibold text-white shadow-[0_18px_35px_rgba(5,150,105,0.24)] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isSubmitting ? 'Creando cuenta...' : 'Crear administrador'}
+        </button>
+      </form>
+    </AuthLayout>
   );
 };
