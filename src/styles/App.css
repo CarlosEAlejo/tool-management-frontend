@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   --app-bg: #edf3f8;
@@ -54,7 +53,7 @@ body {
     radial-gradient(circle at bottom right, rgba(61, 197, 136, 0.12), transparent 26%),
     var(--app-bg);
   color: var(--text-primary);
-  font-family: 'Trebuchet MS', 'Segoe UI', 'Verdana', sans-serif;
+  font-family: "Trebuchet MS", "Segoe UI", "Verdana", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
