@@ -15,7 +15,7 @@ export const ToolDetailModal = ({ tool, isOpen, onClose, onEdit }) => {
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      title="Detalle de Herramienta"
+      title="Detalle de herramienta"
       footer={
         <div className="flex justify-end gap-3">
           <Button variant="secondary" onClick={onClose}>
@@ -30,30 +30,30 @@ export const ToolDetailModal = ({ tool, isOpen, onClose, onEdit }) => {
         <DetailItem label="Nombre" value={tool.name} />
         <DetailItem label="Tipo" value={getTypeLabel(tool.type)} />
         <div>
-          <h3 className="text-sm font-medium text-slate-500">Estado</h3>
-          <span className={`mt-1 inline-flex rounded-full px-2 py-1 text-xs font-semibold ${status.badgeClassName}`}>{status.label}</span>
+          <h3 className="text-sm font-medium text-[var(--text-muted)]">Estado</h3>
+          <span className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${status.badgeClassName}`}>{status.label}</span>
         </div>
         <DetailItem label="Responsable" value={tool.responsible || '-'} />
-        <DetailItem label="Fecha Asignacion" value={formatDate(tool.assignmentDate)} />
-        <DetailItem label="Ultimo Mantenimiento" value={formatDate(tool.dateMaintenance)} />
-        <DetailItem label="Proximo Mantenimiento" value={formatDate(tool.nextMaintenance)} />
+        <DetailItem label="Fecha asignacion" value={formatDate(tool.assignmentDate)} />
+        <DetailItem label="Ultimo mantenimiento" value={formatDate(tool.dateMaintenance)} />
+        <DetailItem label="Proximo mantenimiento" value={formatDate(tool.nextMaintenance)} />
         <DetailItem label="Ubicacion/Almacen" value={tool.location || '-'} />
       </div>
 
-      <div className="mt-6">
-        <h3 className="text-sm font-medium text-slate-500">Notas/Comentarios</h3>
-        <p className="mt-1 text-slate-700">{tool.notes || '-'}</p>
+      <div className="mt-8 rounded-[1.5rem] border border-[var(--border-subtle)] bg-[var(--surface-muted)]/45 p-5">
+        <h3 className="text-sm font-medium text-[var(--text-muted)]">Notas/Comentarios</h3>
+        <p className="mt-2 text-sm leading-7 text-[var(--text-secondary)]">{tool.notes || '-'}</p>
       </div>
 
       <HistoryList
-        title="Historial de Asignaciones"
+        title="Historial de asignaciones"
         items={tool.assignmentHistory}
         renderItem={(item) => `${item.responsible} - ${formatDate(item.assignmentDate)}`}
         emptyMessage="No hay historial de asignaciones"
       />
 
       <HistoryList
-        title="Registro de Mantenimiento"
+        title="Registro de mantenimiento"
         items={tool.maintenanceRecord}
         renderItem={(item) => `${formatDate(item.dateMaintenance)} -> ${formatDate(item.nextMaintenance)}`}
         emptyMessage="No hay registros de mantenimiento"
@@ -63,9 +63,9 @@ export const ToolDetailModal = ({ tool, isOpen, onClose, onEdit }) => {
 };
 
 const DetailItem = ({ label, value }) => (
-  <div>
-    <h3 className="text-sm font-medium text-slate-500">{label}</h3>
-    <p className="mt-1 text-lg font-medium text-slate-900">{value}</p>
+  <div className="rounded-[1.35rem] border border-[var(--border-subtle)] bg-[var(--surface-base)]/80 p-4">
+    <h3 className="text-sm font-medium text-[var(--text-muted)]">{label}</h3>
+    <p className="mt-2 text-lg font-semibold text-[var(--text-primary)]">{value}</p>
   </div>
 );
 
@@ -73,18 +73,18 @@ const HistoryList = ({ title, items, renderItem, emptyMessage }) => {
   const safeItems = Array.isArray(items) ? items : [];
 
   return (
-    <div className="mt-6">
-      <h3 className="mb-2 text-lg font-semibold text-slate-800">{title}</h3>
+    <div className="mt-8">
+      <h3 className="mb-3 text-lg font-semibold text-[var(--text-primary)]">{title}</h3>
       {safeItems.length > 0 ? (
-        <ul className="space-y-2">
+        <ul className="space-y-3">
           {safeItems.map((item, index) => (
-            <li key={`${title}-${index}`} className="rounded-lg border border-slate-200 p-3 text-sm text-slate-700">
+            <li key={`${title}-${index}`} className="rounded-[1.25rem] border border-[var(--border-subtle)] bg-[var(--surface-base)]/70 p-4 text-sm text-[var(--text-secondary)]">
               {renderItem(item)}
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-slate-500">{emptyMessage}</p>
+        <p className="text-sm text-[var(--text-muted)]">{emptyMessage}</p>
       )}
     </div>
   );

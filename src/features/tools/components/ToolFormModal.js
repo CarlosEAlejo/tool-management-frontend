@@ -28,19 +28,19 @@ export const ToolFormModal = ({ isOpen, mode, tool, error, isSaving, onClose, on
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      title={mode === 'edit' ? 'Editar Herramienta' : 'Agregar Nueva Herramienta'}
+      title={mode === 'edit' ? 'Editar herramienta' : 'Agregar nueva herramienta'}
       footer={
         <div className="flex justify-end gap-3">
           <Button variant="secondary" onClick={onClose}>
             Cancelar
           </Button>
           <Button type="submit" form="tool-form" disabled={isSaving}>
-            {isSaving ? 'Guardando...' : 'Guardar Herramienta'}
+            {isSaving ? 'Guardando...' : 'Guardar herramienta'}
           </Button>
         </div>
       }
     >
-      {error ? <div className="mb-4 rounded-lg bg-rose-100 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
+      {error ? <div className="ui-error mb-5">{error}</div> : null}
       <form id="tool-form" onSubmit={handleSubmit}>
         <ToolForm value={formData} mode={mode} onChange={setFormData} />
       </form>

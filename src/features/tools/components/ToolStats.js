@@ -1,19 +1,57 @@
 import React from 'react';
+import { FaArrowTrendUp, FaTriangleExclamation, FaWrench } from 'react-icons/fa6';
 import { formatDate } from '../../../shared/lib/date';
 
 const cards = (stats) => [
-  { label: 'Total Herramientas', value: stats.total, tone: 'text-slate-800' },
-  { label: 'En Mantenimiento', value: stats.maintenance, tone: 'text-amber-700' },
-  { label: 'Proximo Mantenimiento', value: formatDate(stats.nextMaintenance), tone: 'text-blue-700' },
+  {
+    label: 'Total herramientas',
+    value: stats.total,
+    helper: 'Base operativa disponible',
+    icon: FaArrowTrendUp,
+    accent: 'from-sky-500/20 to-blue-500/5 text-sky-700 dark:text-sky-300',
+  },
+  {
+    label: 'En mantenimiento',
+    value: stats.maintenance,
+    helper: 'Equipos fuera de servicio',
+    icon: FaWrench,
+    accent: 'from-amber-500/20 to-orange-500/5 text-amber-700 dark:text-amber-300',
+  },
+  {
+    label: 'Proximo mantenimiento',
+    value: formatDate(stats.nextMaintenance) || '-',
+    helper: 'Fecha mas cercana registrada',
+    icon: FaTriangleExclamation,
+    accent: 'from-emerald-500/20 to-teal-500/5 text-emerald-700 dark:text-emerald-300',
+  },
 ];
 
 export const ToolStats = ({ stats }) => (
-  <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
-    {cards(stats).map((card) => (
-      <div key={card.label} className="rounded-xl bg-white p-6 shadow">
-        <h3 className="text-sm font-medium text-slate-500">{card.label}</h3>
-        <p className={`mt-2 text-2xl font-bold ${card.tone}`}>{card.value || '-'}</p>
+  <section>
+    <div className="mb-3 flex items-center justify-between gap-3">
+      <div>
+        <h2 className="text-lg font-semibold text-[var(--text-primary)]">Resumen general</h2>
+        <p className="text-sm text-[var(--text-muted)]">Indicadores clave para leer el estado del inventario de un vistazo.</p>
       </div>
-    ))}
-  </div>
+    </div>
+    <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+      {cards(stats).map((card) => {
+        const Icon = card.icon;
+        return (
+          <div key={card.label} className="ui-card overflow-hidden">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-sm font-medium text-[var(--text-muted)]">{card.label}</h3>
+                <p className="mt-3 text-3xl font-semibold tracking-tight text-[var(--text-primary)]">{card.value}</p>
+                <p className="mt-2 text-sm text-[var(--text-muted)]">{card.helper}</p>
+              </div>
+              <div className={`rounded-2xl bg-gradient-to-br p-4 ${card.accent}`}>
+                <Icon className="h-5 w-5" />
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </section>
 );

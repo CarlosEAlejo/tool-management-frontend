@@ -11,10 +11,17 @@ export const ToolFilters = ({
   onStatusChange,
   onResponsibleChange,
 }) => (
-  <div className="mb-6 rounded-xl bg-white p-4 shadow">
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+  <div className="ui-panel px-5 py-5">
+    <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+      <div>
+        <p className="text-lg font-semibold text-[var(--text-primary)]">Filtros operativos</p>
+        <p className="text-sm text-[var(--text-muted)]">Refina la tabla por nombre, estado o responsable activo.</p>
+      </div>
+    </div>
+
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       <TextField
-        label="Buscar Herramienta"
+        label="Buscar herramienta"
         name="search"
         placeholder="Nombre o codigo..."
         value={search}

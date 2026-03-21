@@ -19,6 +19,6 @@ export const ConfirmDialog = ({ isOpen, title, message, confirmLabel, onCancel, 
       </div>
     }
   >
-    <p className="text-slate-600">{message}</p>
+    <p className="text-sm leading-6 text-[var(--text-muted)]">{message}</p>
   </ModalShell>
 );
