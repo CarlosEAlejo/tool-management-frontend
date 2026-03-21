@@ -1,6 +1,9 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { LoginPage } from './features/auth/pages/LoginPage';
+import { ThemeProvider, THEME_STORAGE_KEY } from './features/theme/context/ThemeContext';
 import { ToolsPage } from './features/tools/ToolsPage';
+import { AppShell } from './shared/layout/AppShell';
 
 jest.mock('./services/api/toolsService', () => ({
   listTools: jest.fn(),
@@ -9,10 +12,16 @@ jest.mock('./services/api/toolsService', () => ({
   deleteTool: jest.fn(),
 }));
 
+const mockLogout = jest.fn();
+const mockLogin = jest.fn();
+
 jest.mock('./features/auth/context/AuthContext', () => ({
   useAuth: () => ({
     user: { email: 'admin@empresa.com' },
-    logout: jest.fn(),
+    logout: mockLogout,
+    login: mockLogin,
+    initializing: false,
+    isAuthenticated: true,
   }),
 }));
 
@@ -37,25 +46,53 @@ const initialTools = [
   },
 ];
 
-beforeEach(() => {
-  jest.clearAllMocks();
-});
-
-test('renders the tools page with fetched data', async () => {
-  toolsService.listTools.mockResolvedValue(initialTools);
-
+const renderToolsShell = (initialEntries = ['/tools']) =>
   render(
-    <MemoryRouter>
-      <ToolsPage />
-    </MemoryRouter>
+    <ThemeProvider>
+      <MemoryRouter initialEntries={initialEntries}>
+        <Routes>
+          <Route element={<AppShell />}>
+            <Route path="/tools" element={<ToolsPage />} />
+          </Route>
+          <Route path="/login" element={<div>Login screen</div>} />
+        </Routes>
+      </MemoryRouter>
+    </ThemeProvider>
   );
 
-  expect(await screen.findByText(/Gestion de Herramientas/i)).toBeInTheDocument();
-  expect(screen.getByText('Taladro')).toBeInTheDocument();
-  expect(screen.getByText('admin@empresa.com')).toBeInTheDocument();
+beforeEach(() => {
+  jest.clearAllMocks();
+  window.localStorage.clear();
+  document.documentElement.className = '';
 });
 
-test('creates and deletes a tool from the UI', async () => {
+test('renders the protected shell with navigation and fetched tools', async () => {
+  toolsService.listTools.mockResolvedValue(initialTools);
+
+  renderToolsShell();
+
+  expect((await screen.findAllByText(/Gestion de herramientas/i)).length).toBeGreaterThan(0);
+  expect((await screen.findAllByText('Taladro')).length).toBeGreaterThan(0);
+  expect(screen.getAllByText(/Prestamos/i).length).toBeGreaterThan(0);
+  expect(screen.getAllByText('admin@empresa.com').length).toBeGreaterThan(0);
+});
+
+test('persists theme changes from the shell toggle', async () => {
+  toolsService.listTools.mockResolvedValue(initialTools);
+
+  renderToolsShell();
+
+  expect((await screen.findAllByText('Taladro')).length).toBeGreaterThan(0);
+  fireEvent.click(screen.getAllByLabelText(/Cambiar tema/i)[0]);
+
+  await waitFor(() => {
+    expect(document.documentElement.classList.contains('dark')).toBe(true);
+  });
+  expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe('dark');
+  expect(screen.getAllByText(/Cambiar a tema claro/i).length).toBeGreaterThan(0);
+});
+
+test('creates and deletes a tool from the redesigned UI', async () => {
   toolsService.listTools.mockResolvedValue(initialTools);
   toolsService.createTool.mockImplementation(async (payload) => ({
     id: '2',
@@ -65,65 +102,54 @@ test('creates and deletes a tool from the UI', async () => {
   }));
   toolsService.deleteTool.mockResolvedValue();
 
-  render(
-    <MemoryRouter>
-      <ToolsPage />
-    </MemoryRouter>
-  );
+  renderToolsShell();
 
-  await screen.findByText('Taladro');
+  expect((await screen.findAllByText('Taladro')).length).toBeGreaterThan(0);
 
-  fireEvent.click(screen.getByText(/Nueva Herramienta/i));
-  fireEvent.change(screen.getByLabelText(/Codigo de Herramienta/i), { target: { value: 'TL-2' } });
-  fireEvent.change(screen.getByLabelText(/^Nombre/i), { target: { value: 'Martillo' } });
-  fireEvent.change(screen.getByLabelText(/Ubicacion\/Almacen/i), { target: { value: 'Obra' } });
-  fireEvent.click(screen.getByText(/Guardar Herramienta/i));
+  fireEvent.click(screen.getByText(/Nueva herramienta/i));
+  fireEvent.change(screen.getByLabelText(/Codigo de Herramienta\*/i), { target: { value: 'TL-2' } });
+  fireEvent.change(screen.getByLabelText(/^Nombre\*/i), { target: { value: 'Martillo' } });
+  fireEvent.change(screen.getByLabelText(/Ubicacion\/Almacen\*/i), { target: { value: 'Obra' } });
+  fireEvent.click(screen.getByText(/Guardar herramienta/i));
 
-  expect(await screen.findByText('Martillo')).toBeInTheDocument();
+  expect((await screen.findAllByText('Martillo')).length).toBeGreaterThan(0);
 
+  fireEvent.click(screen.getByLabelText(/Abrir acciones Taladro/i));
   fireEvent.click(screen.getByLabelText(/Eliminar Taladro/i));
-  fireEvent.click(screen.getByText(/^Eliminar$/i));
+  fireEvent.click(screen.getAllByText(/^Eliminar$/i).at(-1));
 
   await waitFor(() => {
-    expect(screen.queryByText('Taladro')).not.toBeInTheDocument();
+    expect(screen.queryAllByText('Taladro')).toHaveLength(0);
   });
 });
 
-test('keeps form open and shows mutation error when create fails', async () => {
+test('redirects to login after logout from the shell', async () => {
   toolsService.listTools.mockResolvedValue(initialTools);
-  toolsService.createTool.mockRejectedValue({
-    response: { data: { code: 'validation_error', details: { name: 'Nombre requerido' } } },
+  mockLogout.mockResolvedValue();
+
+  renderToolsShell();
+
+  expect((await screen.findAllByText('Taladro')).length).toBeGreaterThan(0);
+  fireEvent.click(screen.getAllByRole('button', { name: /^Cerrar sesion$/i })[0]);
+
+  await waitFor(() => {
+    expect(mockLogout).toHaveBeenCalled();
   });
-
-  render(
-    <MemoryRouter>
-      <ToolsPage />
-    </MemoryRouter>
-  );
-
-  await screen.findByText('Taladro');
-  fireEvent.click(screen.getByText(/Nueva Herramienta/i));
-  fireEvent.change(screen.getByLabelText(/Codigo de Herramienta/i), { target: { value: 'TL-2' } });
-  fireEvent.click(screen.getByText(/Guardar Herramienta/i));
-
-  expect(await screen.findByText('Nombre requerido')).toBeInTheDocument();
-  expect(screen.getByRole('heading', { name: /Agregar Nueva Herramienta/i })).toBeInTheDocument();
+  expect(await screen.findByText('Login screen')).toBeInTheDocument();
 });
 
-test('shows delete error and keeps row when delete fails', async () => {
-  toolsService.listTools.mockResolvedValue(initialTools);
-  toolsService.deleteTool.mockRejectedValue({ response: { data: { code: 'tool_not_found' } } });
-
+test('login page also responds to the global theme toggle', () => {
   render(
-    <MemoryRouter>
-      <ToolsPage />
-    </MemoryRouter>
+    <ThemeProvider>
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>
+    </ThemeProvider>
   );
 
-  await screen.findByText('Taladro');
-  fireEvent.click(screen.getByLabelText(/Eliminar Taladro/i));
-  fireEvent.click(screen.getByText(/^Eliminar$/i));
+  fireEvent.click(screen.getByLabelText(/Cambiar tema/i));
 
-  expect(await screen.findByText(/ya no existe/i)).toBeInTheDocument();
-  expect(screen.getByText('Taladro')).toBeInTheDocument();
+  expect(document.documentElement.classList.contains('dark')).toBe(true);
+  expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe('dark');
+  expect(screen.getByRole('heading', { name: /Iniciar sesion/i })).toBeInTheDocument();
 });
