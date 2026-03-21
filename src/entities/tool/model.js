@@ -35,11 +35,11 @@ export const TOOL_TYPE_OPTIONS = [
 ];
 
 export const STATUS_META = {
-  [TOOL_STATUS.ACTIVE]: { label: 'Disponible', badgeClassName: 'bg-emerald-100 text-emerald-800' },
-  [TOOL_STATUS.ASSIGNED]: { label: 'Asignada', badgeClassName: 'bg-blue-100 text-blue-800' },
-  [TOOL_STATUS.MAINTENANCE]: { label: 'Mantenimiento', badgeClassName: 'bg-amber-100 text-amber-800' },
-  [TOOL_STATUS.LOST]: { label: 'Perdida', badgeClassName: 'bg-rose-100 text-rose-800' },
-  [TOOL_STATUS.DAMAGED]: { label: 'Danada', badgeClassName: 'bg-rose-100 text-rose-800' },
+  [TOOL_STATUS.ACTIVE]: { label: 'Disponible', badgeClassName: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-200' },
+  [TOOL_STATUS.ASSIGNED]: { label: 'Asignada', badgeClassName: 'bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-200' },
+  [TOOL_STATUS.MAINTENANCE]: { label: 'Mantenimiento', badgeClassName: 'bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-200' },
+  [TOOL_STATUS.LOST]: { label: 'Perdida', badgeClassName: 'bg-rose-100 text-rose-800 dark:bg-rose-500/15 dark:text-rose-200' },
+  [TOOL_STATUS.DAMAGED]: { label: 'Danada', badgeClassName: 'bg-fuchsia-100 text-fuchsia-800 dark:bg-fuchsia-500/15 dark:text-fuchsia-200' },
 };
 
 export const TYPE_LABELS = TOOL_TYPE_OPTIONS.reduce((acc, option) => {
@@ -138,7 +138,7 @@ export const sanitizeToolPayload = (tool) => {
   return payload;
 };
 
-export const getStatusMeta = (status) => STATUS_META[status] || { label: status, badgeClassName: 'bg-slate-100 text-slate-800' };
+export const getStatusMeta = (status) => STATUS_META[status] || { label: status, badgeClassName: 'bg-slate-200 text-slate-700 dark:bg-slate-700/40 dark:text-slate-200' };
 export const getTypeLabel = (type) => TYPE_LABELS[type] || type;
 
 export const filterTools = (tools = [], filters = {}) => {

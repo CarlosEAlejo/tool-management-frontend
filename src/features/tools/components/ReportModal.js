@@ -50,7 +50,7 @@ export const ReportModal = ({ isOpen, onClose, tools, stats }) => {
     <ModalShell
       isOpen={isOpen}
       onClose={onClose}
-      title="Reporte de Inventario"
+      title="Reporte de inventario"
       maxWidth="max-w-4xl"
       footer={
         <div className="flex justify-end gap-3">
@@ -63,22 +63,22 @@ export const ReportModal = ({ isOpen, onClose, tools, stats }) => {
         </div>
       }
     >
-      <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row">
+      <div className="mb-6 flex flex-col gap-4 rounded-[1.5rem] border border-[var(--border-subtle)] bg-[var(--surface-muted)]/45 p-5 md:flex-row md:items-start md:justify-between">
         <div>
-          <h3 className="text-lg font-medium text-slate-900">Empresa Constructora Almendrica</h3>
-          <p className="text-slate-600">Fecha del reporte: {formatDate(new Date().toISOString())}</p>
+          <h3 className="text-lg font-semibold text-[var(--text-primary)]">Empresa Constructora Almendrica</h3>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">Fecha del reporte: {formatDate(new Date().toISOString())}</p>
         </div>
-        <div className="text-right text-sm text-slate-600">
+        <div className="text-sm text-[var(--text-muted)] md:text-right">
           <p>Total herramientas: {stats.total}</p>
           <p>Herramientas perdidas/danadas: {stats.lostOrDamaged}</p>
         </div>
       </div>
 
       <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-4">
-        <SummaryCard label="Disponibles" value={stats.active} color="border-emerald-500" />
-        <SummaryCard label="Asignadas" value={stats.assigned} color="border-blue-500" />
-        <SummaryCard label="Mantenimiento" value={stats.maintenance} color="border-amber-500" />
-        <SummaryCard label="Perdidas/Danadas" value={stats.lostOrDamaged} color="border-rose-500" />
+        <SummaryCard label="Disponibles" value={stats.active} color="border-emerald-500/30" />
+        <SummaryCard label="Asignadas" value={stats.assigned} color="border-sky-500/30" />
+        <SummaryCard label="Mantenimiento" value={stats.maintenance} color="border-amber-500/30" />
+        <SummaryCard label="Perdidas/Danadas" value={stats.lostOrDamaged} color="border-rose-500/30" />
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -91,8 +91,8 @@ export const ReportModal = ({ isOpen, onClose, tools, stats }) => {
 };
 
 const SummaryCard = ({ label, value, color }) => (
-  <div className={`rounded-lg border-l-4 bg-white p-4 shadow ${color}`}>
-    <p className="text-sm text-slate-500">{label}</p>
-    <p className="text-xl font-bold text-slate-800">{value}</p>
+  <div className={`rounded-[1.25rem] border bg-[var(--surface-base)]/80 p-4 ${color}`}>
+    <p className="text-sm text-[var(--text-muted)]">{label}</p>
+    <p className="mt-2 text-xl font-semibold text-[var(--text-primary)]">{value}</p>
   </div>
 );
