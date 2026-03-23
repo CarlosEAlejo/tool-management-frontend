@@ -1,70 +1,73 @@
-# Getting Started with Create React App
+# Tool Management Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Frontend administrativo para la gestion de herramientas. Esta aplicacion usa React + Vite y consume la API Go del proyecto de backend.
 
-## Available Scripts
+## Requisitos
 
-In the project directory, you can run:
+- Node `24.13.0`
+- Backend disponible en `http://localhost:8000`
 
-### `npm start`
+## Desarrollo local
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+1. Levanta el backend desde `tool-management-backend`.
+2. En este directorio instala dependencias si hace falta con `npm install`.
+3. Inicia el frontend con `npm start`.
+4. Abre `http://localhost:5173`.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## API en desarrollo
 
-### `npm test`
+El frontend usa proxy same-origin en Vite:
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- Navegador: `http://localhost:5173`
+- API desde el frontend: `/api/*`
+- Proxy interno hacia: `http://localhost:8000/*`
 
-### `npm run build`
+Esto evita problemas con cookies y CSRF en desarrollo. No abras la app con `127.0.0.1:5173`; usa `localhost:5173`.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+La variable local actual en `.env` es:
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```env
+VITE_API_URL="/api"
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Si en otro entorno necesitas apuntar a una API distinta, puedes cambiar `VITE_API_URL`.
 
-### `npm run eject`
+## Autenticacion
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+El flujo actual usa:
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- `accessToken` en memoria del frontend
+- `refreshToken` en cookie `HttpOnly`
+- token CSRF en cookie legible por el frontend
+- cabecera `X-CSRF-Token` para `refresh` y `logout`
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Comportamiento esperado:
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+- Sin sesion, la app abre en `/login`
+- Tras iniciar sesion, se permite acceder al panel y a rutas protegidas
+- Tras recargar, la sesion se restaura automaticamente si las cookies siguen vigentes
+- Tras cerrar sesion, las rutas protegidas vuelven a redirigir a `/login`
 
-## Learn More
+## Scripts
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+- `npm start`: inicia Vite en desarrollo
+- `npm run build`: genera el build de produccion
+- `npm run test:run`: ejecuta la suite de Vitest
+- `npm test`: ejecuta Vitest en modo interactivo
+- `npm run typecheck`: valida TypeScript sin emitir archivos
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Verificacion recomendada
 
-### Code Splitting
+Antes de dar cambios por cerrados:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+- `npm run test:run`
+- `npm run build`
+- comprobar en navegador `http://localhost:5173`
 
-### Analyzing the Bundle Size
+## Estructura relevante
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- `src/app`: composicion principal de la app y rutas
+- `src/features/auth`: login, registro, contexto de autenticacion y guardas
+- `src/features/tools`: pantalla principal de herramientas
+- `src/services/api`: cliente HTTP y servicios de API
+- `vite.config.ts`: configuracion de Vite y proxy `/api`

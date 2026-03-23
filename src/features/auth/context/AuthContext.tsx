@@ -1,15 +1,16 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { PropsWithChildren } from "react";
+import type { AxiosError } from "axios";
 import { getApiErrorMessage } from "../../../entities/tool/model";
 import { getCurrentUser, loginUser, logoutUser, registerUser } from "../../../services/api/authService";
 import {
   clearStoredSession,
-  getRefreshToken,
+  hasSessionHint,
   refreshSession,
   setAuthFailureHandler,
   storeSessionTokens,
 } from "../../../services/api/client";
-import type { LoginPayload, RegisterPayload, User } from "../../../shared/types";
+import type { AuthSession, LoginPayload, RegisterPayload, User } from "../../../shared/types";
 
 export interface AuthContextValue {
   user: User | null;
@@ -23,10 +24,17 @@ export interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-const applyAuthResult = (result: { accessToken: string; refreshToken: string; user: User }, setUser: React.Dispatch<React.SetStateAction<User | null>>): User => {
+const applyAuthResult = (result: AuthSession, setUser: React.Dispatch<React.SetStateAction<User | null>>): User => {
   storeSessionTokens(result);
   setUser(result.user);
   return result.user;
+};
+
+const isRecoverableLogoutError = (error: unknown): boolean => {
+  const apiError = error as AxiosError<{ code?: string }>;
+  const code = apiError.response?.data?.code;
+
+  return apiError.response?.status === 401 || code === "invalid_csrf_token" || code === "invalid_refresh_token";
 };
 
 export const AuthProvider = ({ children }: PropsWithChildren) => {
@@ -39,8 +47,9 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     });
 
     const initialize = async () => {
-      const persistedRefreshToken = getRefreshToken();
-      if (!persistedRefreshToken) {
+      if (!hasSessionHint()) {
+        clearStoredSession();
+        setUser(null);
         setInitializing(false);
         return;
       }
@@ -83,14 +92,24 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
   };
 
   const logout = async (): Promise<void> => {
-    const refreshToken = getRefreshToken();
-    try {
-      if (refreshToken) {
-        await logoutUser(refreshToken);
-      }
-    } finally {
+    if (!hasSessionHint()) {
       clearStoredSession();
       setUser(null);
+      return;
+    }
+
+    try {
+      await logoutUser();
+      clearStoredSession();
+      setUser(null);
+    } catch (error) {
+      if (isRecoverableLogoutError(error)) {
+        clearStoredSession();
+        setUser(null);
+        return;
+      }
+
+      throw new Error(getApiErrorMessage(error, "No se pudo cerrar la sesion"));
     }
   };
 

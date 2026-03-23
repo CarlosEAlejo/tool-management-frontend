@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import type { ComponentType } from "react";
 import { FaBoxOpen, FaClipboardList, FaMoon, FaSun, FaToolbox, FaWrench } from "react-icons/fa";
 import type { IconBaseProps } from "react-icons";
@@ -147,10 +147,17 @@ export const AppShell = () => {
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const pageMeta = getPageMeta(location.pathname);
+  const [logoutError, setLogoutError] = useState("");
 
   const handleLogout = async () => {
-    await logout();
-    navigate("/login", { replace: true });
+    setLogoutError("");
+
+    try {
+      await logout();
+      navigate("/login", { replace: true });
+    } catch (error) {
+      setLogoutError(error instanceof Error ? error.message : "No se pudo cerrar la sesion");
+    }
   };
 
   return (
@@ -176,6 +183,7 @@ export const AppShell = () => {
               <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[var(--text-muted)]">Sesion activa</p>
               <p className="mt-2 break-words text-sm font-medium text-[var(--text-primary)]">{user?.email || "Administrador"}</p>
               <p className="mt-1 text-sm text-[var(--text-muted)]">Controles globales del panel.</p>
+              {logoutError ? <p className="mt-3 text-sm text-rose-600 dark:text-rose-300">{logoutError}</p> : null}
               <div className="mt-4 grid gap-3">
                 <button
                   type="button"
@@ -220,6 +228,7 @@ export const AppShell = () => {
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[var(--text-muted)]">Sesion activa</p>
                   <p className="mt-1 text-sm font-medium text-[var(--text-primary)]">{user?.email || "Administrador"}</p>
+                  {logoutError ? <p className="mt-2 text-sm text-rose-600 dark:text-rose-300">{logoutError}</p> : null}
                 </div>
                 <Button variant="secondary" onClick={() => void handleLogout()}>
                   Salir
