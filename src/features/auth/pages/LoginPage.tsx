@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AuthLayout } from "../components/AuthLayout";
 import { useAuth } from "../context/AuthContext";
 import type { LoginPayload } from "../../../shared/types";
@@ -11,11 +11,16 @@ const initialState: LoginPayload = {
 };
 
 export const LoginPage = () => {
+  const location = useLocation();
   const navigate = useNavigate();
   const { login } = useAuth();
   const [form, setForm] = useState<LoginPayload>(initialState);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const redirectTo =
+    typeof location.state === "object" && location.state !== null && "from" in location.state && typeof location.state.from === "string"
+      ? location.state.from
+      : "/tools";
 
   const handleChange = ({ target }: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = target;
@@ -32,7 +37,7 @@ export const LoginPage = () => {
 
     try {
       await login(form);
-      navigate("/tools", { replace: true });
+      navigate(redirectTo, { replace: true });
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "No se pudo iniciar sesion");
     } finally {

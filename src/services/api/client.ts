@@ -9,12 +9,15 @@ declare module "axios" {
   }
 }
 
-const baseURL = import.meta.env.VITE_API_URL || "http://localhost:8000";
-const REFRESH_TOKEN_KEY = "tool_management_refresh_token";
+const isDevelopment = import.meta.env.DEV;
+const baseURL = import.meta.env.VITE_API_URL || (isDevelopment ? "/api" : "http://localhost:8000");
+const CSRF_COOKIE_NAME = "tool_management_csrf_token";
+const CSRF_HEADER_NAME = "X-CSRF-Token";
 
 const createJsonClient = (): AxiosInstance =>
   axios.create({
     baseURL,
+    withCredentials: true,
     headers: {
       "Content-Type": "application/json",
     },
@@ -27,39 +30,37 @@ let accessToken: string | null = null;
 let refreshPromise: Promise<AuthSession> | null = null;
 let authFailureHandler: (error?: unknown) => void = () => {};
 
-const canUseStorage = (): boolean => typeof window !== "undefined" && Boolean(window.localStorage);
-
 export const getAccessToken = (): string | null => accessToken;
 
 export const setAccessToken = (token: string | null | undefined): void => {
   accessToken = token || null;
 };
 
-export const getRefreshToken = (): string => {
-  if (!canUseStorage()) {
+export const getCsrfToken = (): string => {
+  if (typeof document === "undefined") {
     return "";
   }
 
-  return window.localStorage.getItem(REFRESH_TOKEN_KEY) || "";
+  const cookie = document.cookie
+    .split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(`${CSRF_COOKIE_NAME}=`));
+
+  if (!cookie) {
+    return "";
+  }
+
+  return decodeURIComponent(cookie.slice(CSRF_COOKIE_NAME.length + 1));
 };
 
-export const storeSessionTokens = ({ accessToken: nextAccessToken, refreshToken }: SessionTokens): void => {
-  setAccessToken(nextAccessToken);
+export const hasSessionHint = (): boolean => Boolean(getCsrfToken());
 
-  if (canUseStorage()) {
-    if (refreshToken) {
-      window.localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
-    } else {
-      window.localStorage.removeItem(REFRESH_TOKEN_KEY);
-    }
-  }
+export const storeSessionTokens = ({ accessToken: nextAccessToken }: SessionTokens): void => {
+  setAccessToken(nextAccessToken);
 };
 
 export const clearStoredSession = (): void => {
   setAccessToken(null);
-  if (canUseStorage()) {
-    window.localStorage.removeItem(REFRESH_TOKEN_KEY);
-  }
 };
 
 export const setAuthFailureHandler = (handler?: (error?: unknown) => void): void => {
@@ -67,14 +68,15 @@ export const setAuthFailureHandler = (handler?: (error?: unknown) => void): void
 };
 
 export const refreshSession = async (): Promise<AuthSession> => {
-  const currentRefreshToken = getRefreshToken();
-  if (!currentRefreshToken) {
-    throw new Error("missing_refresh_token");
+  const csrfToken = getCsrfToken();
+  if (!csrfToken) {
+    clearStoredSession();
+    throw new Error("missing_csrf_token");
   }
 
   if (!refreshPromise) {
     refreshPromise = refreshClient
-      .post<AuthSession>("/auth/refresh", { refreshToken: currentRefreshToken })
+      .post<AuthSession>("/auth/refresh", {}, { headers: { [CSRF_HEADER_NAME]: csrfToken } })
       .then((response) => {
         storeSessionTokens(response.data);
         return response.data;
@@ -112,7 +114,7 @@ client.interceptors.response.use(
       throw error;
     }
 
-    if (!getRefreshToken()) {
+    if (!hasSessionHint()) {
       clearStoredSession();
       authFailureHandler(error);
       throw error;
@@ -133,4 +135,5 @@ client.interceptors.response.use(
   }
 );
 
+export { CSRF_HEADER_NAME };
 export default client;

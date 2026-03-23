@@ -77,11 +77,11 @@ export interface RegisterPayload extends LoginPayload {
 
 export interface SessionTokens {
   accessToken: string;
-  refreshToken: string;
 }
 
 export interface AuthSession extends SessionTokens {
   user: User;
+  expiresIn?: number;
 }
 
 export interface ApiValidationDetails {

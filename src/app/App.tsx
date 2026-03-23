@@ -1,5 +1,6 @@
 import React from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { AuthLandingRoute } from "../features/auth/components/AuthLandingRoute";
 import { PublicOnlyRoute } from "../features/auth/components/PublicOnlyRoute";
 import { ProtectedRoute } from "../features/auth/components/ProtectedRoute";
 import { AuthProvider } from "../features/auth/context/AuthContext";
@@ -15,6 +16,7 @@ const App = () => (
     <ThemeProvider>
       <AuthProvider>
         <Routes>
+          <Route path="/" element={<AuthLandingRoute />} />
           <Route
             path="/login"
             element={
@@ -38,7 +40,6 @@ const App = () => (
               </ProtectedRoute>
             }
           >
-            <Route index element={<Navigate to="/tools" replace />} />
             <Route path="/tools" element={<ToolsPage />} />
             <Route path="/loans" element={<PlaceholderPage title="Prestamos" />} />
             <Route path="/maintenance" element={<PlaceholderPage title="Mantenimiento" />} />
