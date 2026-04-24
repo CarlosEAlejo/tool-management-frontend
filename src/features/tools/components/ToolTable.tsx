@@ -1,6 +1,5 @@
 import React from "react";
 import { getStatusMeta, getTypeLabel } from "../../../entities/tool/model";
-import { formatDate } from "../../../shared/lib/date";
 import { ToolRow } from "./ToolRow";
 import type { Tool } from "../../../entities/tool/model";
 
@@ -43,10 +42,6 @@ export const ToolTable = ({ tools, onView, onEdit, onDelete }: ToolTableProps) =
                   <dt className="text-[var(--text-muted)]">Responsable</dt>
                   <dd className="mt-1 font-medium text-[var(--text-secondary)]">{tool.responsible || "-"}</dd>
                 </div>
-                <div className="col-span-2">
-                  <dt className="text-[var(--text-muted)]">Fecha asignacion</dt>
-                  <dd className="mt-1 font-medium text-[var(--text-secondary)]">{formatDate(tool.assignmentDate)}</dd>
-                </div>
               </dl>
 
               <div className="mt-5 grid grid-cols-[1.3fr_1fr_auto] gap-2">
@@ -83,8 +78,13 @@ export const ToolTable = ({ tools, onView, onEdit, onDelete }: ToolTableProps) =
         <table className="min-w-full divide-y divide-[var(--border-subtle)]">
           <thead className="bg-[var(--surface-muted)]/70">
             <tr>
-              {["Codigo", "Nombre", "Tipo", "Estado", "Responsable", "Fecha asignacion", "Acciones"].map((header) => (
-                <th key={header} className="whitespace-nowrap px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
+              {["Codigo", "Nombre", "Tipo", "Estado", "Responsable", "Acciones"].map((header) => (
+                <th
+                  key={header}
+                  className={`whitespace-nowrap px-6 py-4 align-middle text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)] ${
+                    header === "Acciones" ? "w-28 text-center" : "text-left"
+                  }`}
+                >
                   {header}
                 </th>
               ))}
@@ -97,7 +97,7 @@ export const ToolTable = ({ tools, onView, onEdit, onDelete }: ToolTableProps) =
               ))
             ) : (
               <tr>
-                <td colSpan={7} className="px-6 py-14 text-center">
+                <td colSpan={6} className="px-6 py-14 text-center">
                   <p className="text-base font-medium text-[var(--text-primary)]">No hay herramientas para los filtros seleccionados.</p>
                   <p className="mt-2 text-sm text-[var(--text-muted)]">Ajusta los filtros o registra una nueva herramienta.</p>
                 </td>

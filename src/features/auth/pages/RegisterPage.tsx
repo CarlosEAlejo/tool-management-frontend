@@ -35,7 +35,7 @@ export const RegisterPage = () => {
       await register(form);
       navigate("/tools", { replace: true });
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "No se pudo crear el administrador");
+      setError(submitError instanceof Error ? submitError.message : "No se pudo crear la cuenta de administrador");
     } finally {
       setIsSubmitting(false);
     }
@@ -43,13 +43,13 @@ export const RegisterPage = () => {
 
   return (
     <AuthLayout
-      eyebrow="Bootstrap admin"
-      title="Crear administrador inicial"
-      description="Configura la primera cuenta con la nueva identidad visual y deja lista la entrada al panel protegido."
+      eyebrow="Registro admin"
+      title="Crear cuenta de administrador"
+      description="Registra un nuevo usuario con acceso administrativo completo al panel."
       accent="from-emerald-600 to-cyan-500"
       footer={
         <p>
-          Si ya existe un administrador, vuelve a{" "}
+          Si ya tienes una cuenta, vuelve a{" "}
           <Link className="font-semibold text-emerald-600 transition hover:text-emerald-500" to="/login">
             iniciar sesion
           </Link>
@@ -116,3 +116,4 @@ export const RegisterPage = () => {
     </AuthLayout>
   );
 };
+

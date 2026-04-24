@@ -23,6 +23,15 @@ interface CheckboxFieldProps extends BaseFieldProps {
   onChange: ChangeEventHandler<HTMLInputElement>;
 }
 
+interface SearchableSelectFieldProps extends BaseFieldProps {
+  value: string;
+  options: Option[];
+  placeholder?: string;
+  required?: boolean;
+  disabled?: boolean;
+  onValueChange: (value: string) => void;
+}
+
 export const TextField = ({ label, name, ...props }: TextFieldProps) => (
   <div>
     <label className="ui-label" htmlFor={name}>
@@ -44,6 +53,41 @@ export const SelectField = ({ label, name, options, ...props }: SelectFieldProps
         </option>
       ))}
     </select>
+  </div>
+);
+
+export const SearchableSelectField = ({
+  label,
+  name,
+  value,
+  options,
+  placeholder,
+  required,
+  disabled,
+  onValueChange,
+}: SearchableSelectFieldProps) => (
+  <div>
+    <label className="ui-label" htmlFor={name}>
+      {label}
+    </label>
+    <input
+      id={name}
+      name={name}
+      className={fieldClasses}
+      list={`${name}-options`}
+      value={value}
+      placeholder={placeholder}
+      required={required}
+      disabled={disabled}
+      onChange={(event) => onValueChange(event.target.value)}
+    />
+    <datalist id={`${name}-options`}>
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </datalist>
   </div>
 );
 

@@ -1,14 +1,14 @@
 import React from "react";
 import type { ChangeEvent } from "react";
 import { TOOL_STATUS_OPTIONS } from "../../../entities/tool/model";
-import { SelectField, TextField } from "../../../shared/components/form/Field";
+import { SearchableSelectField, SelectField, TextField } from "../../../shared/components/form/Field";
 import type { ToolFilterStatus } from "../../../shared/types";
 
 interface ToolFiltersProps {
   search: string;
   status: ToolFilterStatus;
   responsible: string;
-  responsibles: string[];
+  responsibleOptions: string[];
   onSearchChange: (value: string) => void;
   onStatusChange: (value: ToolFilterStatus) => void;
   onResponsibleChange: (value: string) => void;
@@ -18,7 +18,7 @@ export const ToolFilters = ({
   search,
   status,
   responsible,
-  responsibles,
+  responsibleOptions,
   onSearchChange,
   onStatusChange,
   onResponsibleChange,
@@ -46,13 +46,15 @@ export const ToolFilters = ({
         value={status}
         onChange={(event: ChangeEvent<HTMLSelectElement>) => onStatusChange(event.target.value as ToolFilterStatus)}
       />
-      <SelectField
+      <SearchableSelectField
         label="Responsable"
-        name="responsible"
-        options={[{ value: "all", label: "Todos" }, ...responsibles.map((item) => ({ value: item, label: item }))]}
+        name="responsible-filter"
         value={responsible}
-        onChange={(event: ChangeEvent<HTMLSelectElement>) => onResponsibleChange(event.target.value)}
+        placeholder="Filtrar por trabajador"
+        options={responsibleOptions.map((item) => ({ value: item, label: item }))}
+        onValueChange={onResponsibleChange}
       />
     </div>
   </div>
 );
+

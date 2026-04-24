@@ -22,7 +22,7 @@
                     "test":  "vitest",
                     "test:run":  "vitest run",
                     "typecheck":  "tsc --noEmit",
-                    "start":  "vite"
+                    "start": "vite --host 127.0.0.1 --port 4173"
                 },
     "devDependencies":  {
                             "@tailwindcss/vite":  "4.1.13",

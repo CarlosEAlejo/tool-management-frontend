@@ -25,6 +25,8 @@ interface HistoryListProps<T> {
   emptyMessage: string;
 }
 
+const formatPrice = (value: number): string => `$${(Number(value) || 0).toFixed(2)}`;
+
 export const ToolDetailModal = ({ tool, isOpen, onClose, onEdit }: ToolDetailModalProps) => {
   if (!tool) {
     return null;
@@ -56,6 +58,8 @@ export const ToolDetailModal = ({ tool, isOpen, onClose, onEdit }: ToolDetailMod
         </div>
         <DetailItem label="Responsable" value={tool.responsible || "-"} />
         <DetailItem label="Fecha asignacion" value={formatDate(tool.assignmentDate)} />
+        <DetailItem label="Fecha de compra" value={formatDate(tool.purchaseDate)} />
+        <DetailItem label="Precio" value={formatPrice(tool.price)} />
         <DetailItem label="Ultimo mantenimiento" value={formatDate(tool.dateMaintenance)} />
         <DetailItem label="Proximo mantenimiento" value={formatDate(tool.nextMaintenance)} />
         <DetailItem label="Ubicacion/Almacen" value={tool.location || "-"} />

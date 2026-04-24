@@ -1,12 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { FaEdit, FaEllipsisV, FaEye, FaTrash } from "react-icons/fa";
-import { getStatusMeta, getTypeLabel } from "../../../entities/tool/model";
-import type { Tool } from "../../../entities/tool/model";
+import { FaEdit, FaEllipsisV, FaTrash } from "react-icons/fa";
+import { getWorkerFullName } from "../../../entities/worker/model";
+import type { Worker } from "../../../entities/worker/model";
 
-interface ToolRowProps {
-  tool: Tool;
-  onView: () => void;
+interface WorkerRowProps {
+  worker: Worker;
   onEdit: () => void;
   onDelete: () => void;
 }
@@ -17,7 +16,7 @@ interface MenuPosition {
 }
 
 const MENU_WIDTH = 208;
-const MENU_FALLBACK_HEIGHT = 164;
+const MENU_FALLBACK_HEIGHT = 116;
 const MENU_GAP = 8;
 const VIEWPORT_PADDING = 16;
 
@@ -35,8 +34,7 @@ const getMenuPosition = (button: HTMLButtonElement, menuHeight: number): MenuPos
   return { top, left };
 };
 
-export const ToolRow = ({ tool, onView, onEdit, onDelete }: ToolRowProps) => {
-  const status = getStatusMeta(tool.status);
+export const WorkerRow = ({ worker, onEdit, onDelete }: WorkerRowProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState<MenuPosition | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
@@ -116,19 +114,16 @@ export const ToolRow = ({ tool, onView, onEdit, onDelete }: ToolRowProps) => {
   return (
     <>
       <tr className="transition hover:bg-[var(--surface-muted)]/60">
-        <td className="whitespace-nowrap px-6 py-4 align-middle text-sm font-semibold text-[var(--text-primary)]">{tool.code}</td>
-        <td className="whitespace-nowrap px-6 py-4 align-middle text-sm text-[var(--text-secondary)]">{tool.name}</td>
-        <td className="whitespace-nowrap px-6 py-4 align-middle text-sm text-[var(--text-muted)]">{getTypeLabel(tool.type)}</td>
-        <td className="whitespace-nowrap px-6 py-4 align-middle">
-          <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${status.badgeClassName}`}>{status.label}</span>
-        </td>
-        <td className="whitespace-nowrap px-6 py-4 align-middle text-sm text-[var(--text-muted)]">{tool.responsible || "-"}</td>
+        <td className="whitespace-nowrap px-6 py-4 align-middle text-sm font-semibold text-[var(--text-primary)]">{getWorkerFullName(worker)}</td>
+        <td className="whitespace-nowrap px-6 py-4 align-middle text-sm text-[var(--text-secondary)]">{worker.position}</td>
+        <td className="whitespace-nowrap px-6 py-4 align-middle text-sm text-[var(--text-muted)]">{worker.email || "-"}</td>
+        <td className="whitespace-nowrap px-6 py-4 align-middle text-sm text-[var(--text-muted)]">{worker.phone || "-"}</td>
         <td className="w-28 whitespace-nowrap px-6 py-4 align-middle text-sm font-medium">
           <div className="flex items-center justify-center">
             <button
               ref={buttonRef}
               type="button"
-              aria-label={`Abrir acciones ${tool.name}`}
+              aria-label={`Abrir acciones ${getWorkerFullName(worker)}`}
               aria-expanded={menuOpen}
               className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border-subtle)] bg-[var(--surface-base)] text-[var(--text-secondary)] transition hover:border-[var(--border-accent)] hover:bg-[var(--surface-accent)]"
               onClick={handleToggleMenu}
@@ -148,17 +143,8 @@ export const ToolRow = ({ tool, onView, onEdit, onDelete }: ToolRowProps) => {
             >
               <button
                 type="button"
-                aria-label={`Ver ${tool.name}`}
-                className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-sky-700 transition hover:bg-sky-500/10 dark:text-sky-300"
-                onClick={() => handleAction(onView)}
-              >
-                <FaEye className="h-4 w-4" />
-                <span>Ver detalle</span>
-              </button>
-              <button
-                type="button"
-                aria-label={`Editar ${tool.name}`}
-                className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-emerald-700 transition hover:bg-emerald-500/10 dark:text-emerald-300"
+                aria-label={`Editar ${getWorkerFullName(worker)}`}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-emerald-700 transition hover:bg-emerald-500/10 dark:text-emerald-300"
                 onClick={() => handleAction(onEdit)}
               >
                 <FaEdit className="h-4 w-4" />
@@ -166,7 +152,7 @@ export const ToolRow = ({ tool, onView, onEdit, onDelete }: ToolRowProps) => {
               </button>
               <button
                 type="button"
-                aria-label={`Eliminar ${tool.name}`}
+                aria-label={`Eliminar ${getWorkerFullName(worker)}`}
                 className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-rose-700 transition hover:bg-rose-500/10 dark:text-rose-300"
                 onClick={() => handleAction(onDelete)}
               >

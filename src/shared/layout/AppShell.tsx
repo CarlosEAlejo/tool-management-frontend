@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import type { ComponentType } from "react";
-import { FaBoxOpen, FaClipboardList, FaMoon, FaSun, FaToolbox, FaWrench } from "react-icons/fa";
+import { FaBoxOpen, FaClipboardList, FaMoon, FaSun, FaToolbox, FaUsers, FaWrench } from "react-icons/fa";
 import type { IconBaseProps } from "react-icons";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../features/auth/context/AuthContext";
@@ -21,6 +21,13 @@ const navigationItems: NavigationItem[] = [
     description: "Inventario, filtros y reportes",
     to: "/tools",
     icon: FaToolbox,
+    available: true,
+  },
+  {
+    label: "Trabajadores",
+    description: "Personal y cargos operativos",
+    to: "/workers",
+    icon: FaUsers,
     available: true,
   },
   {
@@ -52,6 +59,14 @@ const getPageMeta = (pathname: string) => {
       eyebrow: "Panel operativo",
       title: "Gestion de herramientas",
       description: "Inventario, filtros y acciones principales en una vista mas compacta y clara.",
+    };
+  }
+
+  if (pathname.startsWith("/workers")) {
+    return {
+      eyebrow: "Panel operativo",
+      title: "Gestion de trabajadores",
+      description: "Control del personal para asignaciones y seguimiento operativo.",
     };
   }
 

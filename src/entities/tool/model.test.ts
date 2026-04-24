@@ -8,10 +8,13 @@ const tools: Tool[] = [
     name: "Taladro",
     type: TOOL_TYPE.ELECTRIC,
     status: TOOL_STATUS.ACTIVE,
+    responsibleId: "",
     responsible: "",
     assignmentDate: "",
     dateMaintenance: "",
     nextMaintenance: "2026-01-10",
+    purchaseDate: "2025-12-01",
+    price: 125.5,
     deterioration: false,
     location: "Almacen",
     notes: "",
@@ -24,10 +27,13 @@ const tools: Tool[] = [
     name: "Martillo",
     type: TOOL_TYPE.MANUAL,
     status: TOOL_STATUS.ASSIGNED,
+    responsibleId: "w-1",
     responsible: "Ana",
     assignmentDate: "2026-01-01",
     dateMaintenance: "",
     nextMaintenance: "",
+    purchaseDate: "2025-11-20",
+    price: 44,
     deterioration: false,
     location: "Obra",
     notes: "",
@@ -40,10 +46,13 @@ const tools: Tool[] = [
     name: "Sierra",
     type: TOOL_TYPE.ELECTRIC,
     status: TOOL_STATUS.MAINTENANCE,
+    responsibleId: "",
     responsible: "",
     assignmentDate: "",
     dateMaintenance: "2025-01-15",
     nextMaintenance: "2025-02-01",
+    purchaseDate: "2024-12-10",
+    price: 80,
     deterioration: false,
     location: "Taller",
     notes: "",
@@ -68,7 +77,7 @@ test("buildToolStats calculates totals", () => {
 test("buildToolStats keeps plain dates stable across timezone parsing", () => {
   const stats = buildToolStats([
     {
-      ...tools[0]!, 
+      ...tools[0]!,
       nextMaintenance: "2026-03-20",
     },
   ]);
@@ -80,18 +89,23 @@ test("sanitizeToolPayload clears incompatible fields for active tool", () => {
     code: "TL-1",
     name: "Taladro",
     status: TOOL_STATUS.ACTIVE,
+    responsibleId: "w-1",
     responsible: "Ana",
     assignmentDate: "2026-01-01",
     dateMaintenance: "2026-02-01",
     nextMaintenance: "2026-03-01",
+    purchaseDate: "2026-01-20",
+    price: 95.99,
     location: "Almacen",
     notes: "  nota  ",
   });
 
   expect(payload.responsible).toBe("");
+  expect(payload.responsibleId).toBe("");
   expect(payload.assignmentDate).toBe("");
   expect(payload.dateMaintenance).toBe("");
   expect(payload.notes).toBe("nota");
+  expect(payload.price).toBe(95.99);
 });
 
 test("getApiErrorMessage prioritizes validation details and known codes", () => {

@@ -17,16 +17,31 @@ export interface MaintenanceRecordEntry {
   nextMaintenance: string;
 }
 
+export interface Worker {
+  id: string;
+  firstName: string;
+  lastName: string;
+  position: string;
+  email: string;
+  phone: string;
+  notes: string;
+}
+
+export type WorkerFormValues = Omit<Worker, "id">;
+
 export interface Tool {
   id: string;
   code: string;
   name: string;
   type: ToolType;
   status: ToolStatus;
+  responsibleId: string;
   responsible: string;
   assignmentDate: string;
   dateMaintenance: string;
   nextMaintenance: string;
+  purchaseDate: string;
+  price: number;
   deterioration: boolean;
   location: string;
   notes: string;
@@ -58,6 +73,8 @@ export interface ToolReportRow {
   Estado: string;
   Responsable: string;
   FechaAsignacion: string;
+  FechaCompra: string;
+  Precio: string;
   Ubicacion: string;
 }
 
