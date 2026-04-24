@@ -17,6 +17,10 @@ vi.mock("./services/api/toolsService", () => ({
   deleteTool: vi.fn(),
 }));
 
+vi.mock("./services/api/workersService", () => ({
+  listWorkers: vi.fn().mockResolvedValue([]),
+}));
+
 vi.mock("./features/auth/context/AuthContext", () => ({
   useAuth: () => ({
     user: { email: "admin@empresa.com" },
@@ -36,10 +40,13 @@ const initialTools: Tool[] = [
     name: "Taladro",
     type: "electric",
     status: "active",
+    responsibleId: "",
     responsible: "",
     assignmentDate: "",
     dateMaintenance: "",
     nextMaintenance: "",
+    purchaseDate: "",
+    price: 0,
     location: "Almacen",
     notes: "",
     deterioration: false,

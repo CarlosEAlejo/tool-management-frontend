@@ -7,19 +7,33 @@ import {
   TOOL_STATUS,
   TOOL_TYPE_OPTIONS,
 } from "../../../entities/tool/model";
-import { CheckboxField, SelectField, TextField, TextareaField } from "../../../shared/components/form/Field";
+import type { Worker } from "../../../shared/types";
+import { CheckboxField, SearchableSelectField, SelectField, TextField, TextareaField } from "../../../shared/components/form/Field";
 import type { ToolFormValues } from "../../../entities/tool/model";
 
 interface ToolFormProps {
   value?: ToolFormValues;
   mode: "create" | "edit";
+  workers: Worker[];
   onChange: (value: ToolFormValues) => void;
 }
 
-export const ToolForm = ({ value = EMPTY_TOOL_FORM, mode, onChange }: ToolFormProps) => {
+const getWorkerName = (worker: Worker): string => `${worker.firstName} ${worker.lastName}`.trim();
+
+export const ToolForm = ({ value = EMPTY_TOOL_FORM, mode, workers, onChange }: ToolFormProps) => {
   const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value: nextValue, type } = event.target;
     const checked = "checked" in event.target ? event.target.checked : false;
+
+    if (name === "price") {
+      const parsedPrice = Number(nextValue);
+      onChange({
+        ...value,
+        price: Number.isFinite(parsedPrice) && parsedPrice >= 0 ? parsedPrice : 0,
+      });
+      return;
+    }
+
     onChange({
       ...value,
       [name]: type === "checkbox" ? checked : nextValue,
@@ -31,6 +45,10 @@ export const ToolForm = ({ value = EMPTY_TOOL_FORM, mode, onChange }: ToolFormPr
   const requiresMaintenance = value.status === TOOL_STATUS.MAINTENANCE;
   const isDamaged = value.status === TOOL_STATUS.DAMAGED;
 
+  const workerNameById = new Map(workers.map((worker) => [worker.id, getWorkerName(worker)]));
+  const workerByName = new Map(workers.map((worker) => [getWorkerName(worker), worker]));
+  const responsibleDisplayName = value.responsibleId ? workerNameById.get(value.responsibleId) || value.responsible : value.responsible;
+
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
       <TextField label="Codigo de Herramienta*" name="code" required value={value.code} onChange={handleChange} />
@@ -40,7 +58,25 @@ export const ToolForm = ({ value = EMPTY_TOOL_FORM, mode, onChange }: ToolFormPr
 
       {requiresAssignment ? (
         <>
-          <TextField label="Responsable*" name="responsible" required value={value.responsible} onChange={handleChange} />
+          <SearchableSelectField
+            label="Responsable*"
+            name="responsible-worker"
+            required
+            value={responsibleDisplayName}
+            placeholder="Selecciona un trabajador"
+            options={workers.map((worker) => {
+              const fullName = getWorkerName(worker);
+              return { value: fullName, label: `${fullName} (${worker.position})` };
+            })}
+            onValueChange={(nextValue) => {
+              const selectedWorker = workerByName.get(nextValue);
+              onChange({
+                ...value,
+                responsible: nextValue,
+                responsibleId: selectedWorker?.id || "",
+              });
+            }}
+          />
           <TextField label="Fecha de Asignacion*" name="assignmentDate" type="date" required value={value.assignmentDate} onChange={handleChange} />
         </>
       ) : null}
@@ -52,6 +88,8 @@ export const ToolForm = ({ value = EMPTY_TOOL_FORM, mode, onChange }: ToolFormPr
         </>
       ) : null}
 
+      <TextField label="Fecha de compra" name="purchaseDate" type="date" value={value.purchaseDate} onChange={handleChange} />
+      <TextField label="Precio" name="price" type="number" min={0} step="0.01" value={String(value.price)} onChange={handleChange} />
       <TextField label="Ubicacion/Almacen*" name="location" required value={value.location} onChange={handleChange} />
 
       {isDamaged ? <CheckboxField label="Deterioro" name="deterioration" checked={value.deterioration} onChange={handleChange} /> : null}

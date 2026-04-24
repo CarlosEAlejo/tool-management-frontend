@@ -8,6 +8,7 @@ import { LoginPage } from "../features/auth/pages/LoginPage";
 import { RegisterPage } from "../features/auth/pages/RegisterPage";
 import { ThemeProvider } from "../features/theme/context/ThemeContext";
 import { ToolsPage } from "../features/tools/ToolsPage";
+import { WorkersPage } from "../features/workers/WorkersPage";
 import { AppShell } from "../shared/layout/AppShell";
 import { PlaceholderPage } from "../shared/layout/PlaceholderPage";
 
@@ -41,6 +42,7 @@ const App = () => (
             }
           >
             <Route path="/tools" element={<ToolsPage />} />
+            <Route path="/workers" element={<WorkersPage />} />
             <Route path="/loans" element={<PlaceholderPage title="Prestamos" />} />
             <Route path="/maintenance" element={<PlaceholderPage title="Mantenimiento" />} />
             <Route path="/inventory" element={<PlaceholderPage title="Inventario general" />} />

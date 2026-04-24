@@ -68,10 +68,13 @@ export const EMPTY_TOOL_FORM: ToolFormValues = {
   name: "",
   type: TOOL_TYPE.ELECTRIC,
   status: TOOL_STATUS.ACTIVE,
+  responsibleId: "",
   responsible: "",
   assignmentDate: "",
   dateMaintenance: "",
   nextMaintenance: "",
+  purchaseDate: "",
+  price: 0,
   deterioration: false,
   location: "",
   notes: "",
@@ -115,6 +118,8 @@ export const getApiErrorMessage = (error: unknown, fallbackMessage: string): str
 };
 
 export const sanitizeToolPayload = (tool: Partial<ToolFormValues>): ToolFormValues => {
+  const parsedPrice = Number(tool.price);
+
   const payload: ToolFormValues = {
     ...EMPTY_TOOL_FORM,
     ...tool,
@@ -122,10 +127,14 @@ export const sanitizeToolPayload = (tool: Partial<ToolFormValues>): ToolFormValu
     name: tool.name?.trim() ?? "",
     location: tool.location?.trim() ?? "",
     notes: tool.notes?.trim() ?? "",
+    responsibleId: tool.responsibleId?.trim() ?? "",
     responsible: tool.responsible?.trim() ?? "",
+    purchaseDate: tool.purchaseDate ?? "",
+    price: Number.isFinite(parsedPrice) && parsedPrice >= 0 ? parsedPrice : 0,
   };
 
   if (payload.status === TOOL_STATUS.ACTIVE) {
+    payload.responsibleId = "";
     payload.responsible = "";
     payload.assignmentDate = "";
     payload.dateMaintenance = "";
@@ -140,12 +149,16 @@ export const sanitizeToolPayload = (tool: Partial<ToolFormValues>): ToolFormValu
   }
 
   if (payload.status === TOOL_STATUS.MAINTENANCE) {
+    payload.responsibleId = "";
     payload.responsible = "";
     payload.assignmentDate = "";
     payload.deterioration = false;
   }
 
   if (payload.status === TOOL_STATUS.LOST) {
+    payload.responsibleId = "";
+    payload.responsible = "";
+    payload.assignmentDate = "";
     payload.dateMaintenance = "";
     payload.nextMaintenance = "";
     payload.deterioration = false;
@@ -169,7 +182,7 @@ export const filterTools = (tools: Tool[] = [], filters: Partial<ToolFiltersStat
       searchValue === "" || tool.code.toLowerCase().includes(searchValue) || tool.name.toLowerCase().includes(searchValue);
     const matchesStatus = !filters.status || filters.status === "all" || tool.status === filters.status;
     const matchesResponsible =
-      !filters.responsible || filters.responsible === "all" || tool.responsible === filters.responsible;
+      !filters.responsible || filters.responsible === "" || tool.responsible === filters.responsible;
 
     return matchesSearch && matchesStatus && matchesResponsible;
   });
@@ -206,6 +219,8 @@ export const mapToolsToReportRows = (tools: Tool[] = []): ToolReportRow[] =>
     Estado: getStatusMeta(tool.status).label,
     Responsable: tool.responsible || "-",
     FechaAsignacion: tool.assignmentDate || "-",
+    FechaCompra: tool.purchaseDate || "-",
+    Precio: `$${(Number(tool.price) || 0).toFixed(2)}`,
     Ubicacion: tool.location || "-",
   }));
 
