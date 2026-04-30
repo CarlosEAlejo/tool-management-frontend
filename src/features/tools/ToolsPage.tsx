@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { Suspense, lazy, useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { Worker } from "../../shared/types";
 import { listWorkers } from "../../services/api/workersService";
 import { getWorkerApiErrorMessage, getWorkerFullName } from "../../entities/worker/model";
 import { ConfirmDialog } from "../../shared/components/ConfirmDialog";
 import { Loader } from "../../shared/components/Loader";
-import { ReportModal } from "./components/ReportModal";
 import { ToolDetailModal } from "./components/ToolDetailModal";
 import { ToolFilters } from "./components/ToolFilters";
 import { ToolFormModal } from "./components/ToolFormModal";
@@ -14,26 +14,28 @@ import { ToolTable } from "./components/ToolTable";
 import { useToolFilters } from "./hooks/useToolFilters";
 import { useToolModal } from "./hooks/useToolModal";
 import { useTools } from "./hooks/useTools";
+import { queryKeys } from "../../services/query/queryKeys";
 import type { Tool } from "../../entities/tool/model";
+
+const ReportModal = lazy(() => import("./components/ReportModal").then((module) => ({ default: module.ReportModal })));
 
 export const ToolsPage = () => {
   const { tools, loading, error, mutationError, isSaving, isDeleting, create, update, remove, clearMutationError } = useTools();
   const { modal, selectedTool, open, close } = useToolModal();
   const [toolToDelete, setToolToDelete] = useState<Tool | null>(null);
-  const [workers, setWorkers] = useState<Worker[]>([]);
+
+  const workersQuery = useQuery({
+    queryKey: queryKeys.workers.list(),
+    queryFn: () => listWorkers(),
+  });
 
   useEffect(() => {
-    const loadWorkers = async () => {
-      try {
-        const nextWorkers = await listWorkers();
-        setWorkers(Array.isArray(nextWorkers) ? nextWorkers : []);
-      } catch (workerError) {
-        console.warn(getWorkerApiErrorMessage(workerError, "No se pudo cargar el personal"));
-      }
-    };
+    if (workersQuery.error) {
+      console.warn(getWorkerApiErrorMessage(workersQuery.error, "No se pudo cargar el personal"));
+    }
+  }, [workersQuery.error]);
 
-    void loadWorkers();
-  }, []);
+  const workers: Worker[] = workersQuery.data ?? [];
 
   const workerNameById = useMemo(
     () => new Map(workers.map((worker) => [worker.id, getWorkerFullName(worker)])),
@@ -62,7 +64,7 @@ export const ToolsPage = () => {
     return Array.from(new Set([...fromWorkers, ...fromTools])).sort((left, right) => left.localeCompare(right));
   }, [workers, toolsWithResolvedResponsible]);
 
-  if (loading) {
+  if (loading || workersQuery.isLoading) {
     return <Loader />;
   }
 
@@ -135,7 +137,11 @@ export const ToolsPage = () => {
           }
         }}
       />
-      <ReportModal isOpen={modal === "report"} onClose={close} tools={toolsWithResolvedResponsible} stats={stats} />
+      {modal === "report" ? (
+        <Suspense fallback={<Loader />}>
+          <ReportModal isOpen onClose={close} tools={toolsWithResolvedResponsible} stats={stats} />
+        </Suspense>
+      ) : null}
       <ConfirmDialog
         isOpen={Boolean(toolToDelete)}
         title="Confirmacion"

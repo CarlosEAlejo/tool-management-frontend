@@ -1,66 +1,83 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { SearchableSelectField, TextField } from "../../shared/components/form/Field";
 import { Loader } from "../../shared/components/Loader";
 import { getWorkerApiErrorMessage, getWorkerFullName } from "../../entities/worker/model";
 import { getApiErrorMessage, getStatusMeta } from "../../entities/tool/model";
-import type { AssignmentEvent, AssignmentFormValues, Tool, Worker } from "../../shared/types";
+import type { AssignmentFormValues, Tool } from "../../shared/types";
 import { listWorkers } from "../../services/api/workersService";
 import { listTools } from "../../services/api/toolsService";
 import { createAssignment, listAssignments, returnAssignment } from "../../services/api/assignmentsService";
 import { formatDate } from "../../shared/lib/date";
 import { Button } from "../../shared/components/Button";
+import { queryKeys } from "../../services/query/queryKeys";
+import { useDebouncedValue } from "../../shared/hooks/useDebouncedValue";
 
 const today = () => new Date().toISOString().slice(0, 10);
 
 const getToolDisplayName = (tool: Pick<Tool, "code" | "name">): string => `${tool.code} - ${tool.name}`;
 
 export const AssignmentsPage = () => {
-  const [tools, setTools] = useState<Tool[]>([]);
-  const [workers, setWorkers] = useState<Worker[]>([]);
-  const [events, setEvents] = useState<AssignmentEvent[]>([]);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [form, setForm] = useState<AssignmentFormValues>({ toolId: "", workerId: "", assignmentDate: today() });
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [returningToolId, setReturningToolId] = useState("");
-  const [error, setError] = useState("");
   const [mutationError, setMutationError] = useState("");
 
+  const assignmentFilters = useMemo(
+    () => ({ search: search.trim(), from: fromDate, to: toDate }),
+    [search, fromDate, toDate]
+  );
+  const debouncedFilters = useDebouncedValue(assignmentFilters, 300);
+
+  const toolsQuery = useQuery({
+    queryKey: queryKeys.tools.list(),
+    queryFn: () => listTools(),
+  });
+  const workersQuery = useQuery({
+    queryKey: queryKeys.workers.list(),
+    queryFn: () => listWorkers(),
+  });
+  const eventsQuery = useQuery({
+    queryKey: queryKeys.assignments.list(debouncedFilters),
+    queryFn: () => listAssignments(debouncedFilters),
+  });
+
+  const assignMutation = useMutation({
+    mutationFn: createAssignment,
+    onMutate: () => setMutationError(""),
+    onSuccess: (result) => {
+      queryClient.setQueryData<Tool[]>(queryKeys.tools.list(), (previous = []) =>
+        previous.map((tool) => (tool.id === result.tool.id ? result.tool : tool))
+      );
+      void queryClient.invalidateQueries({ queryKey: queryKeys.assignments.all });
+    },
+    onError: (error) => {
+      setMutationError(getApiErrorMessage(error, "No se pudo registrar la asignacion"));
+    },
+  });
+
+  const returnMutation = useMutation({
+    mutationFn: returnAssignment,
+    onMutate: () => setMutationError(""),
+    onSuccess: (result) => {
+      queryClient.setQueryData<Tool[]>(queryKeys.tools.list(), (previous = []) =>
+        previous.map((tool) => (tool.id === result.tool.id ? result.tool : tool))
+      );
+      void queryClient.invalidateQueries({ queryKey: queryKeys.assignments.all });
+    },
+    onError: (error) => {
+      setMutationError(getApiErrorMessage(error, "No se pudo devolver la herramienta"));
+    },
+  });
+
+  const tools = toolsQuery.data ?? [];
+  const workers = workersQuery.data ?? [];
+  const events = eventsQuery.data ?? [];
+
   const workerById = useMemo(() => new Map(workers.map((worker) => [worker.id, worker])), [workers]);
-
-  const loadData = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const [nextTools, nextWorkers, nextEvents] = await Promise.all([
-        listTools(),
-        listWorkers(),
-        listAssignments({ search: search.trim(), from: fromDate, to: toDate }),
-      ]);
-      setTools(Array.isArray(nextTools) ? nextTools : []);
-      setWorkers(Array.isArray(nextWorkers) ? nextWorkers : []);
-      setEvents(Array.isArray(nextEvents) ? nextEvents : []);
-    } catch (err) {
-      setError(getWorkerApiErrorMessage(err, "No se pudieron cargar los datos de asignaciones"));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void loadData();
-  }, []);
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      void loadData();
-    }, 300);
-
-    return () => clearTimeout(timeout);
-  }, [search, fromDate, toDate]);
-
   const operationalTools = useMemo(() => tools.filter((tool) => tool.status === "active" || tool.status === "assigned"), [tools]);
 
   const toolLabelById = useMemo(() => new Map(operationalTools.map((tool) => [tool.id, getToolDisplayName(tool)])), [operationalTools]);
@@ -108,33 +125,35 @@ export const AssignmentsPage = () => {
     [workers]
   );
 
+  const loading = toolsQuery.isLoading || workersQuery.isLoading || eventsQuery.isLoading;
+  const error = toolsQuery.error
+    ? getApiErrorMessage(toolsQuery.error, "No se pudieron cargar las herramientas")
+    : workersQuery.error
+      ? getWorkerApiErrorMessage(workersQuery.error, "No se pudo cargar el personal")
+      : eventsQuery.error
+        ? getWorkerApiErrorMessage(eventsQuery.error, "No se pudieron cargar los datos de asignaciones")
+        : "";
+
   const handleAssign = async () => {
     if (!form.toolId || !form.workerId) {
       setMutationError("Debes seleccionar herramienta y trabajador");
       return;
     }
 
-    setSaving(true);
-    setMutationError("");
     try {
-      await createAssignment(form);
+      await assignMutation.mutateAsync(form);
       setForm({ toolId: "", workerId: "", assignmentDate: today() });
-      await loadData();
-    } catch (err) {
-      setMutationError(getApiErrorMessage(err, "No se pudo registrar la asignacion"));
-    } finally {
-      setSaving(false);
+    } catch {
+      return;
     }
   };
 
   const handleReturn = async (toolId: string) => {
     setReturningToolId(toolId);
-    setMutationError("");
     try {
-      await returnAssignment(toolId);
-      await loadData();
-    } catch (err) {
-      setMutationError(getApiErrorMessage(err, "No se pudo devolver la herramienta"));
+      await returnMutation.mutateAsync(toolId);
+    } catch {
+      return;
     } finally {
       setReturningToolId("");
     }
@@ -192,8 +211,8 @@ export const AssignmentsPage = () => {
           />
         </div>
         <div className="mt-4 flex justify-end">
-          <Button onClick={() => void handleAssign()} disabled={saving}>
-            {saving ? "Guardando..." : "Guardar asignacion"}
+          <Button onClick={() => void handleAssign()} disabled={assignMutation.isPending}>
+            {assignMutation.isPending ? "Guardando..." : "Guardar asignacion"}
           </Button>
         </div>
       </div>

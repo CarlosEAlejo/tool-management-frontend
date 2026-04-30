@@ -1,92 +1,99 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getApiErrorMessage, sanitizeToolPayload } from "../../../entities/tool/model";
 import { createTool, deleteTool, listTools, updateTool } from "../../../services/api/toolsService";
+import { queryKeys } from "../../../services/query/queryKeys";
 import type { MutationResponse, Tool, ToolFormValues } from "../../../entities/tool/model";
 
 export const useTools = () => {
-  const [tools, setTools] = useState<Tool[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const queryClient = useQueryClient();
   const [mutationError, setMutationError] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+
+  const toolsQuery = useQuery({
+    queryKey: queryKeys.tools.list(),
+    queryFn: () => listTools(),
+  });
 
   const clearMutationError = () => {
     setMutationError("");
   };
 
+  const createMutation = useMutation({
+    mutationFn: async (tool: ToolFormValues) => createTool(sanitizeToolPayload(tool)),
+    onMutate: clearMutationError,
+    onSuccess: (created) => {
+      queryClient.setQueryData<Tool[]>(queryKeys.tools.list(), (previous = []) => [...previous, created]);
+    },
+    onError: (error) => {
+      setMutationError(getApiErrorMessage(error, "No se pudo crear la herramienta"));
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (tool: Tool & ToolFormValues) => updateTool(tool.id, sanitizeToolPayload(tool)),
+    onMutate: clearMutationError,
+    onSuccess: (updated) => {
+      queryClient.setQueryData<Tool[]>(queryKeys.tools.list(), (previous = []) =>
+        previous.map((item) => (item.id === updated.id ? updated : item))
+      );
+    },
+    onError: (error) => {
+      setMutationError(getApiErrorMessage(error, "No se pudo actualizar la herramienta"));
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await deleteTool(id);
+      return id;
+    },
+    onMutate: clearMutationError,
+    onSuccess: (id) => {
+      queryClient.setQueryData<Tool[]>(queryKeys.tools.list(), (previous = []) => previous.filter((item) => item.id !== id));
+    },
+    onError: (error) => {
+      setMutationError(getApiErrorMessage(error, "No se pudo eliminar la herramienta"));
+    },
+  });
+
   const refresh = async (): Promise<void> => {
-    setLoading(true);
-    setError("");
-    try {
-      const nextTools = await listTools();
-      setTools(Array.isArray(nextTools) ? nextTools : []);
-    } catch (err) {
-      setError(getApiErrorMessage(err, "No se pudieron cargar las herramientas"));
-    } finally {
-      setLoading(false);
-    }
+    await queryClient.invalidateQueries({ queryKey: queryKeys.tools.all });
   };
 
-  useEffect(() => {
-    void refresh();
-  }, []);
-
   const create = async (tool: ToolFormValues): Promise<MutationResponse<Tool>> => {
-    setIsSaving(true);
-    clearMutationError();
     try {
-      const created = await createTool(sanitizeToolPayload(tool));
-      setTools((prev) => [...prev, created]);
+      const created = await createMutation.mutateAsync(tool);
       return { ok: true, data: created };
-    } catch (err) {
-      const message = getApiErrorMessage(err, "No se pudo crear la herramienta");
-      setMutationError(message);
-      return { ok: false, error: message };
-    } finally {
-      setIsSaving(false);
+    } catch {
+      return { ok: false, error: mutationError || "No se pudo crear la herramienta" };
     }
   };
 
   const update = async (tool: Tool & ToolFormValues): Promise<MutationResponse<Tool>> => {
-    setIsSaving(true);
-    clearMutationError();
     try {
-      const updated = await updateTool(tool.id, sanitizeToolPayload(tool));
-      setTools((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+      const updated = await updateMutation.mutateAsync(tool);
       return { ok: true, data: updated };
-    } catch (err) {
-      const message = getApiErrorMessage(err, "No se pudo actualizar la herramienta");
-      setMutationError(message);
-      return { ok: false, error: message };
-    } finally {
-      setIsSaving(false);
+    } catch {
+      return { ok: false, error: mutationError || "No se pudo actualizar la herramienta" };
     }
   };
 
   const remove = async (id: string): Promise<MutationResponse<null>> => {
-    setIsDeleting(true);
-    clearMutationError();
     try {
-      await deleteTool(id);
-      setTools((prev) => prev.filter((item) => item.id !== id));
+      await deleteMutation.mutateAsync(id);
       return { ok: true, data: null };
-    } catch (err) {
-      const message = getApiErrorMessage(err, "No se pudo eliminar la herramienta");
-      setMutationError(message);
-      return { ok: false, error: message };
-    } finally {
-      setIsDeleting(false);
+    } catch {
+      return { ok: false, error: mutationError || "No se pudo eliminar la herramienta" };
     }
   };
 
   return {
-    tools,
-    loading,
-    error,
+    tools: toolsQuery.data ?? [],
+    loading: toolsQuery.isLoading,
+    error: toolsQuery.error ? getApiErrorMessage(toolsQuery.error, "No se pudieron cargar las herramientas") : "",
     mutationError,
-    isSaving,
-    isDeleting,
+    isSaving: createMutation.isPending || updateMutation.isPending,
+    isDeleting: deleteMutation.isPending,
     refresh,
     create,
     update,

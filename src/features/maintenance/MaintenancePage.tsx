@@ -1,59 +1,75 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getApiErrorMessage, getStatusMeta } from "../../entities/tool/model";
-import type { MaintenanceFormValues, MaintenanceEvent, Tool } from "../../shared/types";
+import type { MaintenanceFormValues, Tool } from "../../shared/types";
 import { SearchableSelectField, TextField } from "../../shared/components/form/Field";
 import { Loader } from "../../shared/components/Loader";
 import { formatDate } from "../../shared/lib/date";
 import { Button } from "../../shared/components/Button";
 import { listTools } from "../../services/api/toolsService";
 import { completeMaintenance, createMaintenance, listMaintenances } from "../../services/api/maintenancesService";
+import { queryKeys } from "../../services/query/queryKeys";
+import { useDebouncedValue } from "../../shared/hooks/useDebouncedValue";
 
 const today = () => new Date().toISOString().slice(0, 10);
 const getToolDisplayName = (tool: Pick<Tool, "code" | "name">): string => `${tool.code} - ${tool.name}`;
 
 export const MaintenancePage = () => {
-  const [tools, setTools] = useState<Tool[]>([]);
-  const [events, setEvents] = useState<MaintenanceEvent[]>([]);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [form, setForm] = useState<MaintenanceFormValues>({ toolId: "", dateMaintenance: today(), nextMaintenance: today() });
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [completingToolId, setCompletingToolId] = useState("");
-  const [error, setError] = useState("");
   const [mutationError, setMutationError] = useState("");
 
-  const loadData = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const [nextTools, nextEvents] = await Promise.all([
-        listTools(),
-        listMaintenances({ search: search.trim(), from: fromDate, to: toDate }),
-      ]);
-      setTools(Array.isArray(nextTools) ? nextTools : []);
-      setEvents(Array.isArray(nextEvents) ? nextEvents : []);
-    } catch (err) {
-      setError(getApiErrorMessage(err, "No se pudieron cargar los datos de mantenimiento"));
-    } finally {
-      setLoading(false);
-    }
-  };
+  const maintenanceFilters = useMemo(
+    () => ({ search: search.trim(), from: fromDate, to: toDate }),
+    [search, fromDate, toDate]
+  );
+  const debouncedFilters = useDebouncedValue(maintenanceFilters, 300);
 
-  useEffect(() => {
-    void loadData();
-  }, []);
+  const toolsQuery = useQuery({
+    queryKey: queryKeys.tools.list(),
+    queryFn: () => listTools(),
+  });
+  const eventsQuery = useQuery({
+    queryKey: queryKeys.maintenances.list(debouncedFilters),
+    queryFn: () => listMaintenances(debouncedFilters),
+  });
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      void loadData();
-    }, 300);
+  const scheduleMutation = useMutation({
+    mutationFn: createMaintenance,
+    onMutate: () => setMutationError(""),
+    onSuccess: (result) => {
+      queryClient.setQueryData<Tool[]>(queryKeys.tools.list(), (previous = []) =>
+        previous.map((tool) => (tool.id === result.tool.id ? result.tool : tool))
+      );
+      void queryClient.invalidateQueries({ queryKey: queryKeys.maintenances.all });
+    },
+    onError: (error) => {
+      setMutationError(getApiErrorMessage(error, "No se pudo registrar el mantenimiento"));
+    },
+  });
 
-    return () => clearTimeout(timeout);
-  }, [search, fromDate, toDate]);
+  const completeMutation = useMutation({
+    mutationFn: completeMaintenance,
+    onMutate: () => setMutationError(""),
+    onSuccess: (result) => {
+      queryClient.setQueryData<Tool[]>(queryKeys.tools.list(), (previous = []) =>
+        previous.map((tool) => (tool.id === result.tool.id ? result.tool : tool))
+      );
+      void queryClient.invalidateQueries({ queryKey: queryKeys.maintenances.all });
+    },
+    onError: (error) => {
+      setMutationError(getApiErrorMessage(error, "No se pudo finalizar el mantenimiento"));
+    },
+  });
 
+  const tools = toolsQuery.data ?? [];
+  const events = eventsQuery.data ?? [];
   const operationalTools = useMemo(() => tools.filter((tool) => tool.status === "active" || tool.status === "maintenance"), [tools]);
+
   const toolLabelById = useMemo(() => new Map(operationalTools.map((tool) => [tool.id, getToolDisplayName(tool)])), [operationalTools]);
   const toolIdByLabel = useMemo(() => {
     const map = new Map<string, string>();
@@ -70,33 +86,33 @@ export const MaintenancePage = () => {
     [operationalTools]
   );
 
+  const loading = toolsQuery.isLoading || eventsQuery.isLoading;
+  const error = toolsQuery.error
+    ? getApiErrorMessage(toolsQuery.error, "No se pudieron cargar las herramientas")
+    : eventsQuery.error
+      ? getApiErrorMessage(eventsQuery.error, "No se pudieron cargar los datos de mantenimiento")
+      : "";
+
   const handleSchedule = async () => {
     if (!form.toolId || !form.dateMaintenance || !form.nextMaintenance) {
       setMutationError("Debes seleccionar herramienta y completar ambas fechas");
       return;
     }
 
-    setSaving(true);
-    setMutationError("");
     try {
-      await createMaintenance(form);
+      await scheduleMutation.mutateAsync(form);
       setForm({ toolId: "", dateMaintenance: today(), nextMaintenance: today() });
-      await loadData();
-    } catch (err) {
-      setMutationError(getApiErrorMessage(err, "No se pudo registrar el mantenimiento"));
-    } finally {
-      setSaving(false);
+    } catch {
+      return;
     }
   };
 
   const handleComplete = async (toolId: string) => {
     setCompletingToolId(toolId);
-    setMutationError("");
     try {
-      await completeMaintenance(toolId);
-      await loadData();
-    } catch (err) {
-      setMutationError(getApiErrorMessage(err, "No se pudo finalizar el mantenimiento"));
+      await completeMutation.mutateAsync(toolId);
+    } catch {
+      return;
     } finally {
       setCompletingToolId("");
     }
@@ -149,8 +165,8 @@ export const MaintenancePage = () => {
           />
         </div>
         <div className="mt-4 flex justify-end">
-          <Button onClick={() => void handleSchedule()} disabled={saving}>
-            {saving ? "Guardando..." : "Guardar mantenimiento"}
+          <Button onClick={() => void handleSchedule()} disabled={scheduleMutation.isPending}>
+            {scheduleMutation.isPending ? "Guardando..." : "Guardar mantenimiento"}
           </Button>
         </div>
       </div>

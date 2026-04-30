@@ -1,90 +1,97 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getWorkerApiErrorMessage, sanitizeWorkerPayload } from "../../../entities/worker/model";
 import { createWorker, deleteWorker, listWorkers, updateWorker } from "../../../services/api/workersService";
+import { queryKeys } from "../../../services/query/queryKeys";
 import type { MutationResponse, Worker, WorkerFormValues } from "../../../entities/worker/model";
 
 export const useWorkers = () => {
-  const [workers, setWorkers] = useState<Worker[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const queryClient = useQueryClient();
   const [mutationError, setMutationError] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+
+  const workersQuery = useQuery({
+    queryKey: queryKeys.workers.list(),
+    queryFn: () => listWorkers(),
+  });
 
   const clearMutationError = () => setMutationError("");
 
-  const refresh = async (search = ""): Promise<void> => {
-    setLoading(true);
-    setError("");
-    try {
-      const nextWorkers = await listWorkers(search);
-      setWorkers(Array.isArray(nextWorkers) ? nextWorkers : []);
-    } catch (err) {
-      setError(getWorkerApiErrorMessage(err, "No se pudo cargar el personal"));
-    } finally {
-      setLoading(false);
-    }
+  const createMutation = useMutation({
+    mutationFn: async (worker: WorkerFormValues) => createWorker(sanitizeWorkerPayload(worker)),
+    onMutate: clearMutationError,
+    onSuccess: (created) => {
+      queryClient.setQueryData<Worker[]>(queryKeys.workers.list(), (previous = []) => [...previous, created]);
+    },
+    onError: (error) => {
+      setMutationError(getWorkerApiErrorMessage(error, "No se pudo crear el trabajador"));
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (worker: Worker) => updateWorker(worker.id, sanitizeWorkerPayload(worker)),
+    onMutate: clearMutationError,
+    onSuccess: (updated) => {
+      queryClient.setQueryData<Worker[]>(queryKeys.workers.list(), (previous = []) =>
+        previous.map((item) => (item.id === updated.id ? updated : item))
+      );
+    },
+    onError: (error) => {
+      setMutationError(getWorkerApiErrorMessage(error, "No se pudo actualizar el trabajador"));
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await deleteWorker(id);
+      return id;
+    },
+    onMutate: clearMutationError,
+    onSuccess: (id) => {
+      queryClient.setQueryData<Worker[]>(queryKeys.workers.list(), (previous = []) => previous.filter((item) => item.id !== id));
+    },
+    onError: (error) => {
+      setMutationError(getWorkerApiErrorMessage(error, "No se pudo eliminar el trabajador"));
+    },
+  });
+
+  const refresh = async (): Promise<void> => {
+    await queryClient.invalidateQueries({ queryKey: queryKeys.workers.all });
   };
 
-  useEffect(() => {
-    void refresh();
-  }, []);
-
   const create = async (worker: WorkerFormValues): Promise<MutationResponse<Worker>> => {
-    setIsSaving(true);
-    clearMutationError();
     try {
-      const created = await createWorker(sanitizeWorkerPayload(worker));
-      setWorkers((prev) => [...prev, created]);
+      const created = await createMutation.mutateAsync(worker);
       return { ok: true, data: created };
-    } catch (err) {
-      const message = getWorkerApiErrorMessage(err, "No se pudo crear el trabajador");
-      setMutationError(message);
-      return { ok: false, error: message };
-    } finally {
-      setIsSaving(false);
+    } catch {
+      return { ok: false, error: mutationError || "No se pudo crear el trabajador" };
     }
   };
 
   const update = async (worker: Worker): Promise<MutationResponse<Worker>> => {
-    setIsSaving(true);
-    clearMutationError();
     try {
-      const updated = await updateWorker(worker.id, sanitizeWorkerPayload(worker));
-      setWorkers((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+      const updated = await updateMutation.mutateAsync(worker);
       return { ok: true, data: updated };
-    } catch (err) {
-      const message = getWorkerApiErrorMessage(err, "No se pudo actualizar el trabajador");
-      setMutationError(message);
-      return { ok: false, error: message };
-    } finally {
-      setIsSaving(false);
+    } catch {
+      return { ok: false, error: mutationError || "No se pudo actualizar el trabajador" };
     }
   };
 
   const remove = async (id: string): Promise<MutationResponse<null>> => {
-    setIsDeleting(true);
-    clearMutationError();
     try {
-      await deleteWorker(id);
-      setWorkers((prev) => prev.filter((item) => item.id !== id));
+      await deleteMutation.mutateAsync(id);
       return { ok: true, data: null };
-    } catch (err) {
-      const message = getWorkerApiErrorMessage(err, "No se pudo eliminar el trabajador");
-      setMutationError(message);
-      return { ok: false, error: message };
-    } finally {
-      setIsDeleting(false);
+    } catch {
+      return { ok: false, error: mutationError || "No se pudo eliminar el trabajador" };
     }
   };
 
   return {
-    workers,
-    loading,
-    error,
+    workers: workersQuery.data ?? [],
+    loading: workersQuery.isLoading,
+    error: workersQuery.error ? getWorkerApiErrorMessage(workersQuery.error, "No se pudo cargar el personal") : "",
     mutationError,
-    isSaving,
-    isDeleting,
+    isSaving: createMutation.isPending || updateMutation.isPending,
+    isDeleting: deleteMutation.isPending,
     refresh,
     create,
     update,
