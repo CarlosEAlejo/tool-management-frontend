@@ -113,6 +113,31 @@ export interface ToolReportRow {
   FechaCompra: string;
   Precio: string;
   Ubicacion: string;
+  Notas: string;
+}
+
+export interface ToolAssignmentHistoryRow {
+  Codigo: string;
+  Herramienta: string;
+  Responsable: string;
+  FechaAsignacion: string;
+}
+
+export interface ToolMaintenanceHistoryRow {
+  Codigo: string;
+  Herramienta: string;
+  FechaMantenimiento: string;
+  ProximoMantenimiento: string;
+}
+
+export interface ToolSummaryRow {
+  Indicador: string;
+  Valor: string | number;
+}
+
+export interface ExcelSheet<Row extends object = Record<string, string | number>> {
+  name: string;
+  rows: Row[];
 }
 
 export interface User {

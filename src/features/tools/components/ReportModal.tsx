@@ -1,11 +1,19 @@
 import React, { useEffect, useMemo, useState } from "react";
 import type { ChangeEvent } from "react";
-import { TOOL_STATUS_OPTIONS, filterTools, getResponsibleOptions, mapToolsToReportRows } from "../../../entities/tool/model";
+import {
+  TOOL_STATUS_OPTIONS,
+  filterTools,
+  getResponsibleOptions,
+  mapToolAssignmentHistoryRows,
+  mapToolMaintenanceHistoryRows,
+  mapToolSummaryRows,
+  mapToolsToReportRows,
+} from "../../../entities/tool/model";
 import { Button } from "../../../shared/components/Button";
 import { SelectField, TextField } from "../../../shared/components/form/Field";
 import { ModalShell } from "../../../shared/components/ModalShell";
 import { formatDate } from "../../../shared/lib/date";
-import { exportRowsToExcel } from "../../../shared/lib/exportToExcel";
+import { exportWorkbookToExcel } from "../../../shared/lib/exportToExcel";
 import type { Tool, ToolStats } from "../../../entities/tool/model";
 
 interface ReportModalProps {
@@ -25,12 +33,14 @@ export const ReportModal = ({ isOpen, onClose, tools, stats }: ReportModalProps)
   const [name, setName] = useState("");
   const [status, setStatus] = useState<typeof TOOL_STATUS_OPTIONS[number]["value"]>("all");
   const [responsible, setResponsible] = useState("all");
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     if (!isOpen) {
       setName("");
       setStatus("all");
       setResponsible("all");
+      setIsExporting(false);
     }
   }, [isOpen]);
 
@@ -49,13 +59,24 @@ export const ReportModal = ({ isOpen, onClose, tools, stats }: ReportModalProps)
     [tools, status, responsible]
   );
 
-  const handleExport = () => {
-    const fileName = `${name || "reporte-herramientas"}-${new Date().toISOString().slice(0, 10)}`;
-    exportRowsToExcel({
-      rows: mapToolsToReportRows(filteredTools),
-      fileName,
-    });
-    onClose();
+  const handleExport = async () => {
+    const fileName = `${name || "reporte-herramientas-completo"}-${new Date().toISOString().slice(0, 10)}`;
+    setIsExporting(true);
+
+    try {
+      await exportWorkbookToExcel({
+        fileName,
+        sheets: [
+          { name: "Resumen", rows: mapToolSummaryRows(filteredTools, stats) },
+          { name: "Inventario", rows: mapToolsToReportRows(filteredTools) },
+          { name: "HistorialAsignaciones", rows: mapToolAssignmentHistoryRows(filteredTools) },
+          { name: "HistorialMantenimientos", rows: mapToolMaintenanceHistoryRows(filteredTools) },
+        ],
+      });
+      onClose();
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
@@ -66,11 +87,11 @@ export const ReportModal = ({ isOpen, onClose, tools, stats }: ReportModalProps)
       maxWidth="max-w-4xl"
       footer={
         <div className="flex justify-end gap-3">
-          <Button variant="secondary" onClick={onClose}>
+          <Button variant="secondary" onClick={onClose} disabled={isExporting}>
             Cerrar
           </Button>
-          <Button variant="success" onClick={handleExport}>
-            Exportar a Excel
+          <Button variant="success" onClick={() => void handleExport()} disabled={isExporting}>
+            {isExporting ? "Generando..." : "Exportar a Excel"}
           </Button>
         </div>
       }
@@ -81,7 +102,8 @@ export const ReportModal = ({ isOpen, onClose, tools, stats }: ReportModalProps)
           <p className="mt-1 text-sm text-[var(--text-muted)]">Fecha del reporte: {formatDate(new Date().toISOString())}</p>
         </div>
         <div className="text-sm text-[var(--text-muted)] md:text-right">
-          <p>Total herramientas: {stats.total}</p>
+          <p>Total herramientas general: {stats.total}</p>
+          <p>Total herramientas filtradas: {filteredTools.length}</p>
           <p>Herramientas perdidas/danadas: {stats.lostOrDamaged}</p>
         </div>
       </div>

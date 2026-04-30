@@ -3,14 +3,18 @@ import type {
   MutationResponse,
   Option,
   Tool,
+  ToolAssignmentHistoryRow,
   ToolFilterStatus,
   ToolFiltersState,
   ToolFormValues,
+  ToolMaintenanceHistoryRow,
   ToolReportRow,
   ToolStats,
   ToolStatus,
+  ToolSummaryRow,
   ToolType,
 } from "../../shared/types";
+import { formatDate } from "../../shared/lib/date";
 
 export const TOOL_STATUS = {
   ACTIVE: "active",
@@ -182,7 +186,7 @@ export const filterTools = (tools: Tool[] = [], filters: Partial<ToolFiltersStat
       searchValue === "" || tool.code.toLowerCase().includes(searchValue) || tool.name.toLowerCase().includes(searchValue);
     const matchesStatus = !filters.status || filters.status === "all" || tool.status === filters.status;
     const matchesResponsible =
-      !filters.responsible || filters.responsible === "" || tool.responsible === filters.responsible;
+      !filters.responsible || filters.responsible === "" || filters.responsible === "all" || tool.responsible === filters.responsible;
 
     return matchesSearch && matchesStatus && matchesResponsible;
   });
@@ -218,10 +222,78 @@ export const mapToolsToReportRows = (tools: Tool[] = []): ToolReportRow[] =>
     Tipo: getTypeLabel(tool.type),
     Estado: getStatusMeta(tool.status).label,
     Responsable: tool.responsible || "-",
-    FechaAsignacion: tool.assignmentDate || "-",
-    FechaCompra: tool.purchaseDate || "-",
+    FechaAsignacion: formatDate(tool.assignmentDate),
+    FechaCompra: formatDate(tool.purchaseDate),
     Precio: `$${(Number(tool.price) || 0).toFixed(2)}`,
     Ubicacion: tool.location || "-",
+    Notas: tool.notes || "-",
   }));
 
-export type { MutationResponse, Tool, ToolFilterStatus, ToolFiltersState, ToolFormValues, ToolReportRow, ToolStats, ToolStatus, ToolType };
+const getHistoryEntries = <Entry>(entries: Entry[] | null | undefined): Entry[] => (Array.isArray(entries) ? entries : []);
+
+export const mapToolAssignmentHistoryRows = (tools: Tool[] = []): ToolAssignmentHistoryRow[] =>
+  tools.flatMap((tool) => {
+    const assignmentHistory = getHistoryEntries(tool.assignmentHistory);
+
+    if (!assignmentHistory.length) {
+      return [{
+        Codigo: tool.code,
+        Herramienta: tool.name,
+        Responsable: "-",
+        FechaAsignacion: "Sin historial",
+      }];
+    }
+
+    return assignmentHistory.map((entry) => ({
+      Codigo: tool.code,
+      Herramienta: tool.name,
+      Responsable: entry.responsible || "-",
+      FechaAsignacion: formatDate(entry.assignmentDate),
+    }));
+  });
+
+export const mapToolMaintenanceHistoryRows = (tools: Tool[] = []): ToolMaintenanceHistoryRow[] =>
+  tools.flatMap((tool) => {
+    const maintenanceRecord = getHistoryEntries(tool.maintenanceRecord);
+
+    if (!maintenanceRecord.length) {
+      return [{
+        Codigo: tool.code,
+        Herramienta: tool.name,
+        FechaMantenimiento: "Sin historial",
+        ProximoMantenimiento: "-",
+      }];
+    }
+
+    return maintenanceRecord.map((entry) => ({
+      Codigo: tool.code,
+      Herramienta: tool.name,
+      FechaMantenimiento: formatDate(entry.dateMaintenance),
+      ProximoMantenimiento: formatDate(entry.nextMaintenance),
+    }));
+  });
+
+export const mapToolSummaryRows = (tools: Tool[] = [], stats: ToolStats): ToolSummaryRow[] => [
+  { Indicador: "Total herramientas filtradas", Valor: tools.length },
+  { Indicador: "Total herramientas general", Valor: stats.total },
+  { Indicador: "Disponibles", Valor: stats.active },
+  { Indicador: "Asignadas", Valor: stats.assigned },
+  { Indicador: "En mantenimiento", Valor: stats.maintenance },
+  { Indicador: "Perdidas o danadas", Valor: stats.lostOrDamaged },
+  { Indicador: "Proximo mantenimiento", Valor: formatDate(stats.nextMaintenance) },
+];
+
+export type {
+  MutationResponse,
+  Tool,
+  ToolAssignmentHistoryRow,
+  ToolFilterStatus,
+  ToolFiltersState,
+  ToolFormValues,
+  ToolMaintenanceHistoryRow,
+  ToolReportRow,
+  ToolStats,
+  ToolStatus,
+  ToolSummaryRow,
+  ToolType,
+};

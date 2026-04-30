@@ -1,4 +1,13 @@
-import { buildToolStats, filterTools, getApiErrorMessage, sanitizeToolPayload, TOOL_STATUS, TOOL_TYPE } from "./model";
+import {
+  buildToolStats,
+  filterTools,
+  getApiErrorMessage,
+  mapToolAssignmentHistoryRows,
+  mapToolMaintenanceHistoryRows,
+  sanitizeToolPayload,
+  TOOL_STATUS,
+  TOOL_TYPE,
+} from "./model";
 import type { Tool } from "../../shared/types";
 
 const tools: Tool[] = [
@@ -113,4 +122,30 @@ test("getApiErrorMessage prioritizes validation details and known codes", () => 
   expect(
     getApiErrorMessage({ response: { data: { code: "validation_error", details: { name: "Nombre requerido" } } } }, "fallback")
   ).toBe("Nombre requerido");
+});
+
+test("report history mappers tolerate null history arrays from the API", () => {
+  const apiTool = {
+    ...tools[0]!,
+    assignmentHistory: null,
+    maintenanceRecord: null,
+  } as Tool & { assignmentHistory: null; maintenanceRecord: null };
+
+  expect(mapToolAssignmentHistoryRows([apiTool as unknown as Tool])).toEqual([
+    {
+      Codigo: "TL-1",
+      Herramienta: "Taladro",
+      Responsable: "-",
+      FechaAsignacion: "Sin historial",
+    },
+  ]);
+
+  expect(mapToolMaintenanceHistoryRows([apiTool as unknown as Tool])).toEqual([
+    {
+      Codigo: "TL-1",
+      Herramienta: "Taladro",
+      FechaMantenimiento: "Sin historial",
+      ProximoMantenimiento: "-",
+    },
+  ]);
 });
