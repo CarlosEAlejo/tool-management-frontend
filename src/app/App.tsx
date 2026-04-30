@@ -1,18 +1,22 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { AssignmentsPage } from "../features/assignments/AssignmentsPage";
 import { AuthLandingRoute } from "../features/auth/components/AuthLandingRoute";
 import { PublicOnlyRoute } from "../features/auth/components/PublicOnlyRoute";
 import { ProtectedRoute } from "../features/auth/components/ProtectedRoute";
 import { AuthProvider } from "../features/auth/context/AuthContext";
-import { LoginPage } from "../features/auth/pages/LoginPage";
-import { RegisterPage } from "../features/auth/pages/RegisterPage";
-import { MaintenancePage } from "../features/maintenance/MaintenancePage";
 import { ThemeProvider } from "../features/theme/context/ThemeContext";
-import { ToolsPage } from "../features/tools/ToolsPage";
-import { WorkersPage } from "../features/workers/WorkersPage";
-import { AppShell } from "../shared/layout/AppShell";
-import { PlaceholderPage } from "../shared/layout/PlaceholderPage";
+import { Loader } from "../shared/components/Loader";
+
+const LoginPage = lazy(() => import("../features/auth/pages/LoginPage").then((module) => ({ default: module.LoginPage })));
+const RegisterPage = lazy(() => import("../features/auth/pages/RegisterPage").then((module) => ({ default: module.RegisterPage })));
+const ToolsPage = lazy(() => import("../features/tools/ToolsPage").then((module) => ({ default: module.ToolsPage })));
+const WorkersPage = lazy(() => import("../features/workers/WorkersPage").then((module) => ({ default: module.WorkersPage })));
+const AssignmentsPage = lazy(() => import("../features/assignments/AssignmentsPage").then((module) => ({ default: module.AssignmentsPage })));
+const MaintenancePage = lazy(() => import("../features/maintenance/MaintenancePage").then((module) => ({ default: module.MaintenancePage })));
+const AppShell = lazy(() => import("../shared/layout/AppShell").then((module) => ({ default: module.AppShell })));
+const PlaceholderPage = lazy(() => import("../shared/layout/PlaceholderPage").then((module) => ({ default: module.PlaceholderPage })));
+
+const withSuspense = (element: React.ReactNode) => <Suspense fallback={<Loader />}>{element}</Suspense>;
 
 const App = () => (
   <BrowserRouter>
@@ -22,32 +26,32 @@ const App = () => (
           <Route path="/" element={<AuthLandingRoute />} />
           <Route
             path="/login"
-            element={
+            element={withSuspense(
               <PublicOnlyRoute>
                 <LoginPage />
               </PublicOnlyRoute>
-            }
+            )}
           />
           <Route
             path="/register"
-            element={
+            element={withSuspense(
               <PublicOnlyRoute>
                 <RegisterPage />
               </PublicOnlyRoute>
-            }
+            )}
           />
           <Route
-            element={
+            element={withSuspense(
               <ProtectedRoute>
                 <AppShell />
               </ProtectedRoute>
-            }
+            )}
           >
-            <Route path="/tools" element={<ToolsPage />} />
-            <Route path="/workers" element={<WorkersPage />} />
-            <Route path="/assignments" element={<AssignmentsPage />} />
-            <Route path="/maintenance" element={<MaintenancePage />} />
-            <Route path="/inventory" element={<PlaceholderPage title="Inventario general" />} />
+            <Route path="/tools" element={withSuspense(<ToolsPage />)} />
+            <Route path="/workers" element={withSuspense(<WorkersPage />)} />
+            <Route path="/assignments" element={withSuspense(<AssignmentsPage />)} />
+            <Route path="/maintenance" element={withSuspense(<MaintenancePage />)} />
+            <Route path="/inventory" element={withSuspense(<PlaceholderPage title="Inventario general" />)} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { vi } from "vitest";
@@ -55,18 +56,28 @@ const initialTools: Tool[] = [
   },
 ];
 
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+
 const renderToolsShell = (initialEntries: string[] = ["/tools"]) =>
   render(
-    <ThemeProvider>
-      <MemoryRouter initialEntries={initialEntries}>
-        <Routes>
-          <Route element={<AppShell />}>
-            <Route path="/tools" element={<ToolsPage />} />
-          </Route>
-          <Route path="/login" element={<div>Login screen</div>} />
-        </Routes>
-      </MemoryRouter>
-    </ThemeProvider>
+    <QueryClientProvider client={createTestQueryClient()}>
+      <ThemeProvider>
+        <MemoryRouter initialEntries={initialEntries}>
+          <Routes>
+            <Route element={<AppShell />}>
+              <Route path="/tools" element={<ToolsPage />} />
+            </Route>
+            <Route path="/login" element={<div>Login screen</div>} />
+          </Routes>
+        </MemoryRouter>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 
 beforeEach(() => {
@@ -152,11 +163,13 @@ test("redirects to login after logout from the shell", async () => {
 
 test("login page also responds to the global theme toggle", () => {
   render(
-    <ThemeProvider>
-      <MemoryRouter>
-        <LoginPage />
-      </MemoryRouter>
-    </ThemeProvider>
+    <QueryClientProvider client={createTestQueryClient()}>
+      <ThemeProvider>
+        <MemoryRouter>
+          <LoginPage />
+        </MemoryRouter>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 
   fireEvent.click(screen.getByLabelText(/Cambiar tema/i));

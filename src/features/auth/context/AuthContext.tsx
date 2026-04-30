@@ -55,9 +55,14 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
       }
 
       try {
-        await refreshSession();
-        const currentUser = await getCurrentUser();
-        setUser(currentUser);
+        const session = await refreshSession();
+
+        if (session.user) {
+          setUser(session.user);
+        } else {
+          const currentUser = await getCurrentUser();
+          setUser(currentUser);
+        }
       } catch {
         clearStoredSession();
         setUser(null);
