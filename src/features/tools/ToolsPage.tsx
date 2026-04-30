@@ -109,7 +109,6 @@ export const ToolsPage = () => {
       <ToolFormModal
         isOpen={modal === "create"}
         mode="create"
-        workers={workers}
         error={modal === "create" ? mutationError : ""}
         isSaving={isSaving}
         onClose={close}
@@ -119,7 +118,6 @@ export const ToolsPage = () => {
       <ToolFormModal
         isOpen={modal === "edit"}
         mode="edit"
-        workers={workers}
         tool={selectedTool}
         error={modal === "edit" ? mutationError : ""}
         isSaving={isSaving}

@@ -82,7 +82,7 @@ test("renders the protected shell with navigation and fetched tools", async () =
 
   expect((await screen.findAllByText(/Gestion de herramientas/i)).length).toBeGreaterThan(0);
   expect((await screen.findAllByText("Taladro")).length).toBeGreaterThan(0);
-  expect(screen.getAllByText(/Prestamos/i).length).toBeGreaterThan(0);
+  expect(screen.getAllByText(/Asignaciones/i).length).toBeGreaterThan(0);
   expect(screen.getAllByText("admin@empresa.com").length).toBeGreaterThan(0);
 });
 

@@ -1,6 +1,8 @@
 export type ToolStatus = "active" | "assigned" | "maintenance" | "lost" | "damaged";
 export type ToolFilterStatus = ToolStatus | "all";
 export type ToolType = "electric" | "manual" | "measuring" | "safety" | "other";
+export type AssignmentAction = "assigned" | "returned";
+export type MaintenanceAction = "scheduled" | "completed";
 
 export interface Option<T extends string = string> {
   value: T;
@@ -50,6 +52,41 @@ export interface Tool {
 }
 
 export type ToolFormValues = Omit<Tool, "id" | "assignmentHistory" | "maintenanceRecord">;
+
+export interface AssignmentEvent {
+  id: string;
+  toolId: string;
+  toolCode: string;
+  toolName: string;
+  workerId: string;
+  workerName: string;
+  action: AssignmentAction;
+  assignmentDate: string;
+  createdAt: string;
+}
+
+export interface AssignmentFormValues {
+  toolId: string;
+  workerId: string;
+  assignmentDate: string;
+}
+
+export interface MaintenanceEvent {
+  id: string;
+  toolId: string;
+  toolCode: string;
+  toolName: string;
+  action: MaintenanceAction;
+  dateMaintenance: string;
+  nextMaintenance: string;
+  createdAt: string;
+}
+
+export interface MaintenanceFormValues {
+  toolId: string;
+  dateMaintenance: string;
+  nextMaintenance: string;
+}
 
 export interface ToolFiltersState {
   search: string;

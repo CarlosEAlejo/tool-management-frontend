@@ -7,20 +7,16 @@ import {
   TOOL_STATUS,
   TOOL_TYPE_OPTIONS,
 } from "../../../entities/tool/model";
-import type { Worker } from "../../../shared/types";
-import { CheckboxField, SearchableSelectField, SelectField, TextField, TextareaField } from "../../../shared/components/form/Field";
+import { CheckboxField, SelectField, TextField, TextareaField } from "../../../shared/components/form/Field";
 import type { ToolFormValues } from "../../../entities/tool/model";
 
 interface ToolFormProps {
   value?: ToolFormValues;
   mode: "create" | "edit";
-  workers: Worker[];
   onChange: (value: ToolFormValues) => void;
 }
 
-const getWorkerName = (worker: Worker): string => `${worker.firstName} ${worker.lastName}`.trim();
-
-export const ToolForm = ({ value = EMPTY_TOOL_FORM, mode, workers, onChange }: ToolFormProps) => {
+export const ToolForm = ({ value = EMPTY_TOOL_FORM, mode, onChange }: ToolFormProps) => {
   const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value: nextValue, type } = event.target;
     const checked = "checked" in event.target ? event.target.checked : false;
@@ -40,53 +36,28 @@ export const ToolForm = ({ value = EMPTY_TOOL_FORM, mode, workers, onChange }: T
     });
   };
 
-  const statusOptions = mode === "create" ? TOOL_CREATE_STATUS_OPTIONS : TOOL_EDITABLE_STATUS_OPTIONS;
-  const requiresAssignment = value.status === TOOL_STATUS.ASSIGNED;
-  const requiresMaintenance = value.status === TOOL_STATUS.MAINTENANCE;
-  const isDamaged = value.status === TOOL_STATUS.DAMAGED;
+  const editableStatusOptions = TOOL_EDITABLE_STATUS_OPTIONS.filter(
+    (option) => option.value !== TOOL_STATUS.ASSIGNED && option.value !== TOOL_STATUS.MAINTENANCE
+  );
 
-  const workerNameById = new Map(workers.map((worker) => [worker.id, getWorkerName(worker)]));
-  const workerByName = new Map(workers.map((worker) => [getWorkerName(worker), worker]));
-  const responsibleDisplayName = value.responsibleId ? workerNameById.get(value.responsibleId) || value.responsible : value.responsible;
+  const statusOptions =
+    mode === "create"
+      ? TOOL_CREATE_STATUS_OPTIONS
+      : value.status === TOOL_STATUS.ASSIGNED
+        ? [{ value: TOOL_STATUS.ASSIGNED, label: "Asignada (gestionada en Asignaciones)" }]
+        : value.status === TOOL_STATUS.MAINTENANCE
+          ? [{ value: TOOL_STATUS.MAINTENANCE, label: "Mantenimiento (gestionado en Mantenimiento)" }]
+          : editableStatusOptions;
+
+  const statusDisabled = mode === "edit" && (value.status === TOOL_STATUS.ASSIGNED || value.status === TOOL_STATUS.MAINTENANCE);
+  const isDamaged = value.status === TOOL_STATUS.DAMAGED;
 
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
       <TextField label="Codigo de Herramienta*" name="code" required value={value.code} onChange={handleChange} />
       <TextField label="Nombre*" name="name" required value={value.name} onChange={handleChange} />
       <SelectField label="Tipo*" name="type" options={TOOL_TYPE_OPTIONS} value={value.type} onChange={handleChange} />
-      <SelectField label="Estado*" name="status" options={statusOptions} value={value.status} onChange={handleChange} />
-
-      {requiresAssignment ? (
-        <>
-          <SearchableSelectField
-            label="Responsable*"
-            name="responsible-worker"
-            required
-            value={responsibleDisplayName}
-            placeholder="Selecciona un trabajador"
-            options={workers.map((worker) => {
-              const fullName = getWorkerName(worker);
-              return { value: fullName, label: `${fullName} (${worker.position})` };
-            })}
-            onValueChange={(nextValue) => {
-              const selectedWorker = workerByName.get(nextValue);
-              onChange({
-                ...value,
-                responsible: nextValue,
-                responsibleId: selectedWorker?.id || "",
-              });
-            }}
-          />
-          <TextField label="Fecha de Asignacion*" name="assignmentDate" type="date" required value={value.assignmentDate} onChange={handleChange} />
-        </>
-      ) : null}
-
-      {requiresMaintenance ? (
-        <>
-          <TextField label="Fecha del Mantenimiento*" name="dateMaintenance" type="date" required value={value.dateMaintenance} onChange={handleChange} />
-          <TextField label="Fecha Proximo Mantenimiento*" name="nextMaintenance" type="date" required value={value.nextMaintenance} onChange={handleChange} />
-        </>
-      ) : null}
+      <SelectField label="Estado*" name="status" options={statusOptions} value={value.status} onChange={handleChange} disabled={statusDisabled} />
 
       <TextField label="Fecha de compra" name="purchaseDate" type="date" value={value.purchaseDate} onChange={handleChange} />
       <TextField label="Precio" name="price" type="number" min={0} step="0.01" value={String(value.price)} onChange={handleChange} />

@@ -31,18 +31,18 @@ const navigationItems: NavigationItem[] = [
     available: true,
   },
   {
-    label: "Prestamos",
-    description: "Seguimiento de entregas",
-    to: "/loans",
+    label: "Asignaciones",
+    description: "Asignar y devolver herramientas",
+    to: "/assignments",
     icon: FaClipboardList,
-    available: false,
+    available: true,
   },
   {
     label: "Mantenimiento",
-    description: "Programacion y control",
+    description: "Programar y cerrar mantenimientos",
     to: "/maintenance",
     icon: FaWrench,
-    available: false,
+    available: true,
   },
   {
     label: "Inventario general",
@@ -67,6 +67,22 @@ const getPageMeta = (pathname: string) => {
       eyebrow: "Panel operativo",
       title: "Gestion de trabajadores",
       description: "Control del personal para asignaciones y seguimiento operativo.",
+    };
+  }
+
+  if (pathname.startsWith("/assignments")) {
+    return {
+      eyebrow: "Panel operativo",
+      title: "Gestion de asignaciones",
+      description: "Asigna, reasigna y devuelve herramientas con historial centralizado.",
+    };
+  }
+
+  if (pathname.startsWith("/maintenance")) {
+    return {
+      eyebrow: "Panel operativo",
+      title: "Gestion de mantenimiento",
+      description: "Programa y cierra mantenimientos con historial centralizado.",
     };
   }
 

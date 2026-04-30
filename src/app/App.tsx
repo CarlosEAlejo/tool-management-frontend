@@ -1,11 +1,13 @@
 import React from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { AssignmentsPage } from "../features/assignments/AssignmentsPage";
 import { AuthLandingRoute } from "../features/auth/components/AuthLandingRoute";
 import { PublicOnlyRoute } from "../features/auth/components/PublicOnlyRoute";
 import { ProtectedRoute } from "../features/auth/components/ProtectedRoute";
 import { AuthProvider } from "../features/auth/context/AuthContext";
 import { LoginPage } from "../features/auth/pages/LoginPage";
 import { RegisterPage } from "../features/auth/pages/RegisterPage";
+import { MaintenancePage } from "../features/maintenance/MaintenancePage";
 import { ThemeProvider } from "../features/theme/context/ThemeContext";
 import { ToolsPage } from "../features/tools/ToolsPage";
 import { WorkersPage } from "../features/workers/WorkersPage";
@@ -43,8 +45,8 @@ const App = () => (
           >
             <Route path="/tools" element={<ToolsPage />} />
             <Route path="/workers" element={<WorkersPage />} />
-            <Route path="/loans" element={<PlaceholderPage title="Prestamos" />} />
-            <Route path="/maintenance" element={<PlaceholderPage title="Mantenimiento" />} />
+            <Route path="/assignments" element={<AssignmentsPage />} />
+            <Route path="/maintenance" element={<MaintenancePage />} />
             <Route path="/inventory" element={<PlaceholderPage title="Inventario general" />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
